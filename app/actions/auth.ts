@@ -25,7 +25,7 @@ export async function signIn(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect("/organizations");
 }
 
 export async function signOut() {

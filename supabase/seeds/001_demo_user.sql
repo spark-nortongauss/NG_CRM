@@ -31,12 +31,12 @@ INSERT INTO auth.users (
   gen_random_uuid(),
   'authenticated',
   'authenticated',
-  'demo@nortongauss.com',
-  crypt('Demo@123456', gen_salt('bf')),
+  'shovon@nortongauss.com',
+  crypt('shovon@123456', gen_salt('bf')),
   now(),
   now(),
   '{"provider":"email","providers":["email"]}'::jsonb,
-  '{"full_name":"Demo User"}'::jsonb,
+  '{"full_name":"Shovon"}'::jsonb,
   now(),
   now(),
   '',
@@ -72,7 +72,7 @@ SELECT
   now(),
   now()
 FROM auth.users u
-WHERE u.email = 'demo@nortongauss.com'
+WHERE u.email = 'shovon@nortongauss.com'
 AND NOT EXISTS (
   SELECT 1 FROM auth.identities i 
   WHERE i.user_id = u.id AND i.provider = 'email'
