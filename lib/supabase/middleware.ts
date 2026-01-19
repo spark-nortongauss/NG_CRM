@@ -38,7 +38,9 @@ export async function updateSession(request: NextRequest) {
     error,
   } = await supabase.auth.getUser();
 
-  if (error) {
+  // Note: AuthSessionMissingError is expected for unauthenticated users
+  // Only log unexpected errors
+  if (error && error.name !== "AuthSessionMissingError") {
     console.error("Middleware auth error:", error);
   }
 
