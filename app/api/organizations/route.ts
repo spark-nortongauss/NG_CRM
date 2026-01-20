@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
       annual_revenue_currency,
       marketing_opt_in_status,
       do_not_contact,
+      account_owner_user_id,
       ...rest
     } = body;
 
@@ -27,10 +28,17 @@ export async function POST(req: NextRequest) {
     const { data: authData } = await supabase.auth.getUser();
     const userId = authData?.user?.id ?? null;
 
+    // Convert empty strings to null for UUID fields
+    const accountOwnerId =
+      account_owner_user_id && account_owner_user_id.trim() !== ""
+        ? account_owner_user_id
+        : null;
+
     const { data: org, error } = await supabase
       .from("organizations")
       .insert({
         ...rest,
+        account_owner_user_id: accountOwnerId,
         annual_revenue_amount:
           typeof annual_revenue_amount === "number"
             ? annual_revenue_amount
@@ -47,7 +55,10 @@ export async function POST(req: NextRequest) {
     if (error) {
       console.error("Error inserting organization:", error);
       return NextResponse.json(
-        { error: "Failed to create organization" },
+        {
+          error: "Failed to create organization",
+          details: error.message || "Database error",
+        },
         { status: 500 },
       );
     }
@@ -77,10 +88,15 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("Organization create error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
     return NextResponse.json(
       {
         error: "Failed to create organization",
-        details: error instanceof Error ? error.message : "Unknown error",
+        details: errorMessage,
+        ...(process.env.NODE_ENV === "development" && { stack: errorStack }),
       },
       { status: 500 },
     );
