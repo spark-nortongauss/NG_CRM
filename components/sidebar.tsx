@@ -107,7 +107,7 @@ export function Sidebar() {
                                 Add Contact
                             </Link>
                             <Link
-                                href="#"
+                                href="/contacts"
                                 className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-blue-600"
                             >
                                 <List className="h-4 w-4" />
