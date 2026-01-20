@@ -44,6 +44,15 @@ export async function updateSession(request: NextRequest) {
     console.error("Middleware auth error:", error);
   }
 
+  // Handle root path - always allow redirect to /login
+  // This ensures the app always starts from login page
+  if (request.nextUrl.pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("from", "root");
+    return NextResponse.redirect(url);
+  }
+
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
@@ -56,10 +65,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && request.nextUrl.pathname === "/login") {
-    // user is logged in, redirect to dashboard
+  // Check if user is coming from root path (via query parameter)
+  // This allows the app to always start from login page, even if user is authenticated
+  const isComingFromRoot = request.nextUrl.searchParams.get("from") === "root";
+  
+  // Only redirect authenticated users away from /login if they explicitly navigate there
+  // Don't redirect if they're coming from root (/) - let them see the login page
+  // This ensures the app always starts from login when opening fresh
+  if (user && request.nextUrl.pathname === "/login" && !isComingFromRoot) {
+    // user is logged in and explicitly navigating to login (not from root), redirect to dashboard
     const url = request.nextUrl.clone();
     url.pathname = "/organizations";
+    url.searchParams.delete("from"); // Clean up query param
     return NextResponse.redirect(url);
   }
 

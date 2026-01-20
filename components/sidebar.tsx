@@ -24,8 +24,8 @@ export function Sidebar() {
     const isActive = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
 
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
-        organizations: true,
-        contacts: true,
+        organizations: false,
+        contacts: false,
     });
 
     const toggleMenu = (key: string) => {
