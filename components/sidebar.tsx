@@ -13,24 +13,18 @@ import {
     ChevronDown,
     LogOut
 } from "lucide-react";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/actions/auth";
+import { useUI } from "@/lib/hooks/use-store";
 
 export function Sidebar() {
     const pathname = usePathname();
 
+    // Use custom hook for UI state
+    const { openMenus, toggleMenu } = useUI();
+
     // Helper to check if a route is active
     const isActive = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
-
-    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
-        organizations: false,
-        contacts: false,
-    });
-
-    const toggleMenu = (key: string) => {
-        setOpenMenus((prev) => ({ ...prev, [key]: !prev[key] }));
-    };
 
     return (
         <div className="flex h-screen flex-col bg-white w-64 fixed left-0 top-0 z-50 overflow-y-auto">

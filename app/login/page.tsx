@@ -14,21 +14,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useAuth } from "@/lib/hooks/use-store";
 
 export default function LoginPage() {
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Use custom hook for auth state
+  const { error, isLoading, setError, setLoading } = useAuth();
+
   async function handleSubmit(formData: FormData) {
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
 
     const result = await signIn(formData);
 
     if (result?.error) {
       setError(result.error);
-      setIsLoading(false);
+      setLoading(false);
     }
   }
 
