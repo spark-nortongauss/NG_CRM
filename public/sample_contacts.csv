@@ -1,0 +1,11 @@
+First Name,Last Name,Organization,Mobile 1,Mobile 2,Mobile 3,Fixed Number,Email 1,Email 2,Email 3,City,State,Country,Contact Status,Contacted
+John,Doe,Acme Corporation,+1-555-0101,+1-555-0102,+1-555-0103,+1-555-0100,john.doe@acme.com,j.doe@acme.com,johnd@acme.com,New York,NY,USA,Not Contacted,No
+Jane,Smith,Tech Innovations Inc,+1-555-0201,,,,jane.smith@techinnovations.com,jane.s@techinnovations.com,,San Francisco,CA,USA,Email,Yes
+Michael,Johnson,Global Solutions Ltd,+44-20-7123-4567,+44-7700-900123,,+44-20-7123-4500,m.johnson@globalsolutions.co.uk,,,London,,United Kingdom,LinkedIn,Yes
+Sarah,Williams,Digital Marketing Pro,+1-555-0301,+1-555-0302,,+1-555-0300,sarah.williams@digitalmarketing.com,s.williams@digitalmarketing.com,,Chicago,IL,USA,Call,Yes
+Robert,Brown,Enterprise Systems,+1-555-0401,,,,robert.brown@enterprisesys.com,,,Boston,MA,USA,Not Contacted,No
+Emily,Davis,Cloud Services Group,+1-555-0501,+1-555-0502,+1-555-0503,,emily.davis@cloudservices.com,e.davis@cloudservices.com,emily.d@cloudservices.com,Seattle,WA,USA,Email,Yes
+David,Martinez,Consulting Partners,+52-55-1234-5678,,,+52-55-1234-5600,david.martinez@consultingpartners.mx,d.martinez@consultingpartners.mx,,Mexico City,CDMX,Mexico,Not Contacted,No
+Lisa,Anderson,Software Development Co,+1-555-0601,,,,lisa.anderson@softwaredev.com,,,Austin,TX,USA,Call,Yes
+James,Taylor,Financial Services Inc,+1-555-0701,+1-555-0702,,+1-555-0700,james.taylor@financialservices.com,j.taylor@financialservices.com,,Miami,FL,USA,LinkedIn,Yes
+Jennifer,Thomas,Marketing Solutions,+1-555-0801,,,,jennifer.thomas@marketingsolutions.com,jen.thomas@marketingsolutions.com,j.thomas@marketingsolutions.com,Denver,CO,USA,Not Contacted,No

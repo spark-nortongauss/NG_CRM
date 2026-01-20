@@ -100,7 +100,7 @@ export function Sidebar() {
                     {openMenus.contacts && (
                         <div className="ml-9 mt-1 space-y-1">
                             <Link
-                                href="#"
+                                href="/contacts/add"
                                 className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-blue-600"
                             >
                                 <Plus className="h-4 w-4" />
