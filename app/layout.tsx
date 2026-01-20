@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "dropzone/dist/dropzone.css";
 import { LayoutShell } from "@/components/layout-shell";
 import { Header } from "@/components/header";
 import { AppStoreProvider } from "@/providers/app-store-provider";

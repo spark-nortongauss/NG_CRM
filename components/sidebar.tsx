@@ -57,8 +57,13 @@ export function Sidebar() {
                     {openMenus.organizations && (
                         <div className="ml-9 mt-1 space-y-1">
                             <Link
-                                href="#"
-                                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                                href="/add-org-form"
+                                className={cn(
+                                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-gray-50 hover:text-blue-600",
+                                    pathname === "/add-org-form"
+                                        ? "bg-blue-50 text-blue-600 font-medium"
+                                        : "text-gray-600"
+                                )}
                             >
                                 <Plus className="h-4 w-4" />
                                 Add Organization
