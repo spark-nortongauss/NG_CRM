@@ -20,6 +20,8 @@ interface Organization {
   primary_email: string | null;
   primary_phone_e164: string | null;
   industry_primary: string | null;
+  vertical: string | null;
+  sub_vertical: string | null;
   hq_city: string | null;
   hq_country_code: string | null;
   annual_revenue_amount: number | null;

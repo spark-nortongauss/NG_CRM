@@ -86,6 +86,8 @@ export function AddOrganizationForm({
     hq_postal_code: "",
     timezone: "",
     industry_primary: "",
+    vertical: "",
+    sub_vertical: "",
     business_model: "",
     employee_count_range: "",
     annual_revenue_amount: "",
@@ -188,6 +190,8 @@ export function AddOrganizationForm({
         hq_postal_code: "",
         timezone: "",
         industry_primary: "",
+        vertical: "",
+        sub_vertical: "",
         annual_revenue_amount: "",
         tags: "",
         registration_number: "",
@@ -430,6 +434,26 @@ export function AddOrganizationForm({
               value={form.industry_primary}
               onChange={handleChange}
               placeholder="e.g. Software, Manufacturing"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="vertical">Vertical</Label>
+            <Input
+              id="vertical"
+              name="vertical"
+              value={form.vertical}
+              onChange={handleChange}
+              placeholder="e.g. Technology, Healthcare"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="sub_vertical">Sub-vertical</Label>
+            <Input
+              id="sub_vertical"
+              name="sub_vertical"
+              value={form.sub_vertical}
+              onChange={handleChange}
+              placeholder="e.g. SaaS, Biotech"
             />
           </div>
           <div className="space-y-1.5">

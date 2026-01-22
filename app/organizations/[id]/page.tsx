@@ -21,6 +21,8 @@ interface Organization {
   hq_postal_code: string | null;
   timezone: string | null;
   industry_primary: string | null;
+  vertical: string | null;
+  sub_vertical: string | null;
   business_model: string | null;
   employee_count_range: string | null;
   annual_revenue_amount: number | null;
@@ -241,6 +243,8 @@ export default function OrganizationDetailPage({
           </h3>
           <div className="space-y-4">
             <EditableField label="Industry" field="industry_primary" />
+            <EditableField label="Vertical" field="vertical" />
+            <EditableField label="Sub-vertical" field="sub_vertical" />
             <EditableField label="Business Model" field="business_model" />
             <EditableField label="Employees" field="employee_count_range" />
             <div className="grid grid-cols-2 gap-4">
