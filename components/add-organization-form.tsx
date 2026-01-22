@@ -103,6 +103,9 @@ export function AddOrganizationForm({
     payment_terms: "",
     preferred_currency: "USD",
     internal_notes: "",
+    discovery_search_terms: "",
+    discovery_sources: "",
+    keywords: "",
   });
 
   const timezoneOptions = COUNTRY_TIMEZONE_MAP[form.hq_country_code] ?? ["UTC"];
@@ -193,6 +196,9 @@ export function AddOrganizationForm({
         do_not_contact: false,
         billing_email: "",
         internal_notes: "",
+        discovery_search_terms: "",
+        discovery_sources: "",
+        keywords: "",
       }));
 
       router.refresh();
@@ -707,6 +713,55 @@ export function AddOrganizationForm({
             Bulk Organizations Import (Optional)
           </p>
           <OrganizationFileUploadZone />
+        </div>
+      </section>
+
+      {/* Section 7: Discovery & Keywords */}
+      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">
+            Discovery & Keywords
+          </h2>
+          <p className="text-xs text-gray-500">
+            Track how this organization was discovered and relevant keywords for
+            SEO.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5 md:col-span-2">
+            <Label htmlFor="discovery_search_terms">
+              Discovery Search Terms
+            </Label>
+            <Input
+              id="discovery_search_terms"
+              name="discovery_search_terms"
+              value={form.discovery_search_terms}
+              onChange={handleChange}
+              placeholder="Search terms used to discover this organization"
+            />
+          </div>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label htmlFor="discovery_sources">Discovery Sources (JSON)</Label>
+            <textarea
+              id="discovery_sources"
+              name="discovery_sources"
+              value={form.discovery_sources}
+              onChange={handleChange}
+              rows={3}
+              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              placeholder='JSON array of SERP results, e.g., [{"url": "...", "title": "..."}]'
+            />
+          </div>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label htmlFor="keywords">Keywords</Label>
+            <Input
+              id="keywords"
+              name="keywords"
+              value={form.keywords}
+              onChange={handleChange}
+              placeholder="Comma-separated keywords for SEO and categorization"
+            />
+          </div>
         </div>
       </section>
 
