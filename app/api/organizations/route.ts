@@ -19,11 +19,11 @@ export async function POST(req: NextRequest) {
     const parsedTags: string[] = Array.isArray(tags)
       ? tags
       : typeof tags === "string"
-      ? tags
+        ? tags
           .split(",")
           .map((t: string) => t.trim())
           .filter(Boolean)
-      : [];
+        : [];
 
     const { data: authData } = await supabase.auth.getUser();
     const userId = authData?.user?.id ?? null;
@@ -99,6 +99,48 @@ export async function POST(req: NextRequest) {
         ...(process.env.NODE_ENV === "development" && { stack: errorStack }),
       },
       { status: 500 },
+    );
+  }
+}
+
+export async function GET(req: NextRequest) {
+  const supabase = await createClient();
+  const url = new URL(req.url);
+  const page = parseInt(url.searchParams.get("page") || "1");
+  const limit = parseInt(url.searchParams.get("limit") || "10");
+  const offset = (page - 1) * limit;
+
+  // Clamp limit
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+
+  try {
+    const { data, count, error } = await supabase
+      .from("organizations")
+      .select(`
+        *,
+        creator:created_by_user_id (
+          full_name,
+          email
+        )
+      `, { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(offset, offset + safeLimit - 1);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      data,
+      count,
+      page,
+      limit: safeLimit,
+      totalPages: count ? Math.ceil(count / safeLimit) : 0,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
     );
   }
 }
