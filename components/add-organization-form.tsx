@@ -53,12 +53,19 @@ const PAYMENT_TERMS = ["Net 30", "Net 45", "Prepaid"] as const;
 const CURRENCIES = ["USD", "EUR", "GBP", "INR"] as const;
 
 const COUNTRY_TIMEZONE_MAP: Record<string, string[]> = {
-  US: ["America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles"],
+  US: [
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+  ],
   GB: ["Europe/London"],
   IN: ["Asia/Kolkata"],
 };
 
-export function AddOrganizationForm({ accountOwners }: AddOrganizationFormProps) {
+export function AddOrganizationForm({
+  accountOwners,
+}: AddOrganizationFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,21 +105,24 @@ export function AddOrganizationForm({ accountOwners }: AddOrganizationFormProps)
     internal_notes: "",
   });
 
-  const timezoneOptions =
-    COUNTRY_TIMEZONE_MAP[form.hq_country_code] ?? ["UTC"];
+  const timezoneOptions = COUNTRY_TIMEZONE_MAP[form.hq_country_code] ?? ["UTC"];
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
+    const checked =
+      e.target instanceof HTMLInputElement ? e.target.checked : false;
     setForm((prev) => ({
       ...prev,
       [name]:
         type === "checkbox"
           ? checked
           : name === "hq_country_code"
-          ? value.toUpperCase()
-          : value,
+            ? value.toUpperCase()
+            : value,
     }));
   };
 
@@ -716,5 +726,3 @@ export function AddOrganizationForm({ accountOwners }: AddOrganizationFormProps)
     </form>
   );
 }
-
-
