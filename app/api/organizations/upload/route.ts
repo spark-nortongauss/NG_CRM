@@ -219,10 +219,10 @@ export async function POST(request: NextRequest) {
       if (!row || row.length === 0 || row.every(c => !c?.trim())) continue;
 
       const orgData: Record<string, unknown> = {};
+      let tagsValue = "";
 
       // Extract data according to mapping
-      let tagsValue: string | null = null;
-      Object.entries(columnMapping).forEach(([colIndex, fieldName]) => {
+      for (const [colIndex, fieldName] of Object.entries(columnMapping)) {
         const val = row[parseInt(colIndex)] || "";
         if (val) {
           // Handle special field types
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
             orgData[fieldName] = val;
           }
         }
-      });
+      }
 
       // User Requirement: "No excel sheet upload shows failure"
       // Even if we only have one value, we save it.
@@ -276,9 +276,10 @@ export async function POST(request: NextRequest) {
       orgData.updated_by_user_id = userId;
 
       // Store tags separately for later insertion into organization_tags table
+      const parsedTags = tagsValue ? tagsValue.split(",").map(t => t.trim()).filter(Boolean) : [];
       const orgWithTags = {
         orgData,
-        tags: tagsValue ? tagsValue.split(",").map(t => t.trim()).filter(Boolean) : [],
+        tags: parsedTags,
       };
 
       organizationsToInsert.push(orgWithTags);
