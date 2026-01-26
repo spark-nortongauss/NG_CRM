@@ -39,6 +39,23 @@ export function FileUploadZone() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Prevent browser's default drag-and-drop behavior (opening/downloading the file)
+  useEffect(() => {
+    const preventDefaults = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // Add handlers to document to prevent browser from opening the file
+    document.addEventListener("dragover", preventDefaults);
+    document.addEventListener("drop", preventDefaults);
+
+    return () => {
+      document.removeEventListener("dragover", preventDefaults);
+      document.removeEventListener("drop", preventDefaults);
+    };
+  }, []);
+
   useEffect(() => {
     if (!dropzoneRef.current) return;
 
@@ -47,14 +64,14 @@ export function FileUploadZone() {
 
     // Initialize Dropzone
     const dz = new Dropzone(dropzoneRef.current, {
-      url: "/api/contacts/upload", // You'll need to create this API endpoint
-      autoProcessQueue: false, // Don't auto-upload, wait for user confirmation
+      url: "/api/contacts/upload",
+      autoProcessQueue: false,
       acceptedFiles:
         ".csv,.xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv",
-      maxFilesize: 10, // 10 MB
+      maxFilesize: 10,
       addRemoveLinks: false,
       dictDefaultMessage: "",
-      previewsContainer: false, // We'll handle previews ourselves
+      previewsContainer: false,
       clickable: true,
     });
 

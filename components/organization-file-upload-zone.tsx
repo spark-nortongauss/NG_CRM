@@ -9,6 +9,7 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   AlertCircle,
+  Download,
 } from "lucide-react";
 
 interface UploadedFile {
@@ -38,6 +39,23 @@ export function OrganizationFileUploadZone() {
   const dzInstanceRef = useRef<Dropzone | null>(null);
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Prevent browser's default drag-and-drop behavior (opening/downloading the file)
+  useEffect(() => {
+    const preventDefaults = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // Add handlers to document to prevent browser from opening the file
+    document.addEventListener("dragover", preventDefaults);
+    document.addEventListener("drop", preventDefaults);
+
+    return () => {
+      document.removeEventListener("dragover", preventDefaults);
+      document.removeEventListener("drop", preventDefaults);
+    };
+  }, []);
 
   useEffect(() => {
     if (!dropzoneRef.current) return;
@@ -151,8 +169,44 @@ export function OrganizationFileUploadZone() {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await fetch("/api/organizations/template");
+      if (!response.ok) {
+        throw new Error("Failed to download template");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "organization_bulk_upload_template.csv";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error downloading template:", error);
+      alert("Failed to download template. Please try again.");
+    }
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm text-gray-600">
+          Need a template? Download the CSV template with all required columns.
+        </p>
+        <button
+          type="button"
+          onClick={handleDownloadTemplate}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200 border border-blue-200"
+        >
+          <Download className="h-4 w-4" />
+          Download Template
+        </button>
+      </div>
+
       <div
         ref={dropzoneRef}
         className={`
