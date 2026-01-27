@@ -24,6 +24,7 @@ interface Organization {
   sub_vertical: string | null;
   hq_city: string | null;
   hq_country_code: string | null;
+  linkedin_url: string | null;
   annual_revenue_amount: number | null;
   account_tier: string | null;
   keywords: string | null;
@@ -140,6 +141,7 @@ export default function OrganizationsPage() {
                 <TableHead className="w-[150px]">Industry</TableHead>
                 <TableHead className="w-[120px]">City</TableHead>
                 <TableHead className="w-[80px]">Country</TableHead>
+                <TableHead className="w-[180px]">LinkedIn</TableHead>
                 <TableHead className="w-[100px]">Revenue</TableHead>
                 <TableHead className="w-[100px]">Tier</TableHead>
                 <TableHead className="w-[200px]">Keywords</TableHead>
@@ -154,7 +156,7 @@ export default function OrganizationsPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="h-24 text-center">
+                  <TableCell colSpan={13} className="h-24 text-center">
                     <div className="flex justify-center items-center">
                       <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
                     </div>
@@ -163,7 +165,7 @@ export default function OrganizationsPage() {
               ) : organizations.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={12}
+                    colSpan={13}
                     className="h-24 text-center text-gray-500"
                   >
                     No organizations found.
@@ -183,6 +185,21 @@ export default function OrganizationsPage() {
                     <TableCell>{org.industry_primary || "-"}</TableCell>
                     <TableCell>{org.hq_city || "-"}</TableCell>
                     <TableCell>{org.hq_country_code || "-"}</TableCell>
+                    <TableCell>
+                      {org.linkedin_url ? (
+                        <a
+                          href={org.linkedin_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline truncate block max-w-[160px]"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {org.linkedin_url.replace(/^https?:\/\/(www\.)?linkedin\.com\//, "")}
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
                     <TableCell>
                       {org.annual_revenue_amount
                         ? `$${org.annual_revenue_amount.toLocaleString()}`

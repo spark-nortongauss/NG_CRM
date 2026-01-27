@@ -11,6 +11,7 @@ interface Organization {
   trade_name: string | null;
   company_type: string | null;
   website_url: string | null;
+  linkedin_url: string | null;
   primary_email: string | null;
   primary_phone_e164: string | null;
   hq_country_code: string | null;
@@ -217,6 +218,12 @@ export default function OrganizationDetailPage({
               label="Phone"
               field="primary_phone_e164"
               type="tel"
+            />
+            <EditableField
+              label="LinkedIn URL"
+              field="linkedin_url"
+              type="url"
+              placeholder="https://linkedin.com/company/..."
             />
           </div>
         </section>

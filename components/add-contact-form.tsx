@@ -24,6 +24,7 @@ export function AddContactForm() {
     first_name: "",
     last_name: "",
     organization: "",
+    job_title: "",
     mobile_1: "",
     mobile_2: "",
     mobile_3: "",
@@ -91,6 +92,7 @@ export function AddContactForm() {
         first_name: "",
         last_name: "",
         organization: "",
+        job_title: "",
         mobile_1: "",
         mobile_2: "",
         mobile_3: "",
@@ -168,7 +170,7 @@ export function AddContactForm() {
               placeholder="Doe"
             />
           </div>
-          <div className="space-y-1.5 md:col-span-2">
+          <div className="space-y-1.5">
             <Label htmlFor="organization">Organization</Label>
             <Input
               id="organization"
@@ -176,6 +178,16 @@ export function AddContactForm() {
               value={form.organization}
               onChange={handleChange}
               placeholder="Company name"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="job_title">Job Title</Label>
+            <Input
+              id="job_title"
+              name="job_title"
+              value={form.job_title}
+              onChange={handleChange}
+              placeholder="e.g. Sales Manager"
             />
           </div>
         </div>

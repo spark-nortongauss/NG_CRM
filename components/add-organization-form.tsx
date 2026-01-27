@@ -76,6 +76,7 @@ export function AddOrganizationForm({
     trade_name: "",
     company_type: "",
     website_url: "",
+    linkedin_url: "",
     primary_email: "",
     primary_phone_e164: "",
     hq_country_code: "",
@@ -180,6 +181,7 @@ export function AddOrganizationForm({
         legal_name: "",
         trade_name: "",
         website_url: "",
+        linkedin_url: "",
         primary_email: "",
         primary_phone_e164: "",
         hq_country_code: "",
@@ -301,6 +303,17 @@ export function AddOrganizationForm({
               value={form.website_url}
               onChange={handleChange}
               placeholder="https://example.com"
+              type="url"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+            <Input
+              id="linkedin_url"
+              name="linkedin_url"
+              value={form.linkedin_url}
+              onChange={handleChange}
+              placeholder="https://linkedin.com/company/example"
               type="url"
             />
           </div>

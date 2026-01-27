@@ -18,6 +18,7 @@ export async function GET() {
       "Trading Name",
       "Company Type",
       "Website URL",
+      "LinkedIn URL",
       "Primary Email",
       "Primary Phone",
       "Country Code",

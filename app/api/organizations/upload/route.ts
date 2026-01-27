@@ -153,6 +153,7 @@ export async function POST(request: NextRequest) {
         else if (lower === "trading name" || lower === "trade name") columnMapping[index] = "trade_name";
         else if (lower === "company type" || lower === "type") columnMapping[index] = "company_type";
         else if (lower === "website" || lower === "website url") columnMapping[index] = "website_url";
+        else if (lower === "linkedin" || lower === "linkedin url") columnMapping[index] = "linkedin_url";
         else if (lower === "email" || lower === "primary email") columnMapping[index] = "primary_email";
         else if (lower === "phone" || lower === "primary phone") columnMapping[index] = "primary_phone_e164";
         // Location

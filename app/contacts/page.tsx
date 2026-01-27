@@ -19,6 +19,7 @@ interface Contact {
   first_name: string | null;
   last_name: string | null;
   organization: string | null;
+  job_title: string | null;
   mobile_1: string | null;
   mobile_2: string | null;
   email_1: string | null;
@@ -126,12 +127,13 @@ export default function ContactsPage() {
       <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
         {/* Table Container with Horizontal Scroll */}
         <div className="overflow-x-auto">
-          <Table className="min-w-[1200px]">
+          <Table className="min-w-[1350px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[150px]">First Name</TableHead>
                 <TableHead className="w-[150px]">Last Name</TableHead>
                 <TableHead className="w-[180px]">Organization</TableHead>
+                <TableHead className="w-[150px]">Job Title</TableHead>
                 <TableHead className="w-[140px]">Mobile 1</TableHead>
                 <TableHead className="w-[180px]">Email 1</TableHead>
                 <TableHead className="w-[120px]">City</TableHead>
@@ -147,16 +149,16 @@ export default function ContactsPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="h-24 text-center">
-                    <div className="flex justify-center items-center">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                    </div>
-                  </TableCell>
+<TableCell colSpan={12} className="h-24 text-center">
+                      <div className="flex justify-center items-center">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                      </div>
+                    </TableCell>
                 </TableRow>
               ) : contacts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={11}
+                    colSpan={12}
                     className="h-24 text-center text-gray-500"
                   >
                     No contacts found.
@@ -176,6 +178,7 @@ export default function ContactsPage() {
                       {contact.last_name || "-"}
                     </TableCell>
                     <TableCell>{contact.organization || "-"}</TableCell>
+                    <TableCell>{contact.job_title || "-"}</TableCell>
                     <TableCell>{contact.mobile_1 || "-"}</TableCell>
                     <TableCell>{contact.email_1 || "-"}</TableCell>
                     <TableCell>{contact.city || "-"}</TableCell>

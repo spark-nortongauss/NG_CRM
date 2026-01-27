@@ -10,6 +10,7 @@ interface Contact {
   first_name: string | null;
   last_name: string | null;
   organization: string | null;
+  job_title: string | null;
   mobile_1: string | null;
   mobile_2: string | null;
   mobile_3: string | null;
@@ -231,6 +232,7 @@ export default function ContactDetailPage({
             <EditableField label="First Name" field="first_name" />
             <EditableField label="Last Name" field="last_name" />
             <EditableField label="Organization" field="organization" />
+            <EditableField label="Job Title" field="job_title" />
           </div>
         </section>
 
