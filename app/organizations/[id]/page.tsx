@@ -2,8 +2,19 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Check, Loader2, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
+
+interface OrganizationContact {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  job_title: string | null;
+  fixed_number: string | null;
+  email_1: string | null;
+  organization: string | null;
+}
 
 interface Organization {
   org_id: string;
@@ -55,12 +66,15 @@ export default function OrganizationDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [contacts, setContacts] = useState<OrganizationContact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [contactsLoading, setContactsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingField, setSavingField] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrganization();
+    fetchContacts();
   }, [id]);
 
   const fetchOrganization = async () => {
@@ -73,6 +87,20 @@ export default function OrganizationDetailPage({
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchContacts = async () => {
+    try {
+      setContactsLoading(true);
+      const response = await fetch(`/api/organizations/${id}/contacts`);
+      if (!response.ok) throw new Error("Failed to fetch contacts");
+      const data = await response.json();
+      setContacts(data);
+    } catch (err) {
+      console.error("Error fetching contacts:", err);
+    } finally {
+      setContactsLoading(false);
     }
   };
 
@@ -288,6 +316,89 @@ export default function OrganizationDetailPage({
             <EditableField label="Billing Email" field="billing_email" />
             <EditableField label="Payment Terms" field="payment_terms" />
           </div>
+        </section>
+
+        {/* Contacts Section (Full Width) */}
+        <section className="col-span-full space-y-4">
+          <div className="flex items-center justify-between border-b pb-2">
+            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Organization Contacts
+            </h3>
+            <span className="text-xs text-gray-500">
+              {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {contactsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            </div>
+          ) : contacts.length === 0 ? (
+            <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+              <Users className="h-10 w-10 mx-auto text-gray-400 mb-2" />
+              <p className="text-sm text-gray-500">No contacts found for this organization</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Full Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Job Title
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Fixed Number
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {contacts.map((contact) => (
+                    <tr
+                      key={contact.id}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => router.push(`/contacts/${contact.id}`)}
+                    >
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <Link
+                          href={`/contacts/${contact.id}`}
+                          className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {[contact.first_name, contact.last_name].filter(Boolean).join(" ") || "-"}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                        {contact.job_title || "-"}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                        {contact.fixed_number || "-"}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                        {contact.email_1 ? (
+                          <a
+                            href={`mailto:${contact.email_1}`}
+                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {contact.email_1}
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         {/* Notes (Full Width) */}

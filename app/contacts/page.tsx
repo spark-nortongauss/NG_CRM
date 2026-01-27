@@ -13,6 +13,11 @@ import {
 } from "@/components/ui/table";
 import { Trash2, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
+import {
+  ColumnCustomizer,
+  ColumnConfig,
+  useColumnVisibility,
+} from "@/components/ui/column-customizer";
 
 interface Contact {
   id: string;
@@ -22,8 +27,11 @@ interface Contact {
   job_title: string | null;
   mobile_1: string | null;
   mobile_2: string | null;
+  mobile_3: string | null;
+  fixed_number: string | null;
   email_1: string | null;
   email_2: string | null;
+  email_3: string | null;
   city: string | null;
   state: string | null;
   country: string | null;
@@ -31,13 +39,66 @@ interface Contact {
   contact_date: string | null;
   contacted: boolean;
   created_at: string;
+  [key: string]: any;
 }
+
+// Define all available columns with their configurations
+const ALL_COLUMNS: ColumnConfig[] = [
+  { key: "first_name", label: "First Name", width: "150px" },
+  { key: "last_name", label: "Last Name", width: "150px" },
+  { key: "organization", label: "Organization", width: "180px" },
+  { key: "job_title", label: "Job Title", width: "150px" },
+  { key: "mobile_1", label: "Mobile 1", width: "140px" },
+  { key: "mobile_2", label: "Mobile 2", width: "140px" },
+  { key: "mobile_3", label: "Mobile 3", width: "140px" },
+  { key: "fixed_number", label: "Fixed Number", width: "140px" },
+  { key: "email_1", label: "Email 1", width: "200px" },
+  { key: "email_2", label: "Email 2", width: "200px" },
+  { key: "email_3", label: "Email 3", width: "200px" },
+  { key: "city", label: "City", width: "120px" },
+  { key: "state", label: "State", width: "100px" },
+  { key: "country", label: "Country", width: "100px" },
+  { key: "contact_status", label: "Status", width: "120px" },
+  { key: "contact_date", label: "Contact Date", width: "120px" },
+  { key: "contacted", label: "Contacted", width: "100px" },
+  { key: "created_at", label: "Created Date", width: "120px" },
+];
+
+// Default columns shown initially
+const DEFAULT_COLUMNS = [
+  "first_name",
+  "last_name",
+  "organization",
+  "job_title",
+  "mobile_1",
+  "email_1",
+  "city",
+  "state",
+  "country",
+  "contact_status",
+  "contact_date",
+];
+
+const STORAGE_KEY = "contacts-table-columns";
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Column visibility state
+  const [visibleColumns, setVisibleColumns] = useColumnVisibility(
+    STORAGE_KEY,
+    DEFAULT_COLUMNS
+  );
+
+  // Bulk delete state
+  const [bulkDeleteRange, setBulkDeleteRange] = useState("");
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState<string[]>([]);
+  const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -87,6 +148,102 @@ export default function ContactsPage() {
     }
   };
 
+  // Parse row range string like "18-37" into start and end numbers
+  const parseRowRange = (
+    rangeStr: string
+  ): { start: number; end: number } | null => {
+    const trimmed = rangeStr.trim();
+    const match = trimmed.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (!match) return null;
+
+    const start = parseInt(match[1], 10);
+    const end = parseInt(match[2], 10);
+
+    if (isNaN(start) || isNaN(end) || start < 1 || end < start) return null;
+    return { start, end };
+  };
+
+  // Handle bulk delete button click - validate and show confirmation modal
+  const handleBulkDeleteClick = () => {
+    setBulkDeleteError(null);
+
+    if (!bulkDeleteRange.trim()) {
+      setBulkDeleteError("Please enter a row range (e.g., 18-37)");
+      return;
+    }
+
+    const range = parseRowRange(bulkDeleteRange);
+    if (!range) {
+      setBulkDeleteError("Invalid format. Use format like: 18-37");
+      return;
+    }
+
+    // Calculate actual row indices based on current page
+    const pageOffset = (page - 1) * limit;
+    const startIndex = range.start - 1 - pageOffset;
+    const endIndex = range.end - 1 - pageOffset;
+
+    // Validate that the range is within the current page's data
+    if (startIndex < 0 || endIndex >= contacts.length || startIndex > endIndex) {
+      const currentPageStart = pageOffset + 1;
+      const currentPageEnd = Math.min(pageOffset + contacts.length, totalCount);
+      setBulkDeleteError(
+        `Row range must be within current page (${currentPageStart}-${currentPageEnd})`
+      );
+      return;
+    }
+
+    // Get the IDs of contacts to delete
+    const idsToDelete = contacts
+      .slice(startIndex, endIndex + 1)
+      .map((contact) => contact.id);
+
+    if (idsToDelete.length === 0) {
+      setBulkDeleteError("No rows found in the specified range");
+      return;
+    }
+
+    setBulkDeleteIds(idsToDelete);
+    setShowBulkDeleteModal(true);
+  };
+
+  // Perform the actual bulk delete
+  const handleBulkDelete = async () => {
+    if (bulkDeleteIds.length === 0) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const response = await fetch("/api/contacts/bulk-delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ids: bulkDeleteIds }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete contacts");
+      }
+
+      // Refresh data and reset state
+      fetchContacts();
+      setBulkDeleteRange("");
+      setBulkDeleteIds([]);
+      setShowBulkDeleteModal(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete contacts");
+      console.error(err);
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  const cancelBulkDelete = () => {
+    setShowBulkDeleteModal(false);
+    setBulkDeleteIds([]);
+  };
+
   const handleRowClick = (contactId: string) => {
     router.push(`/contacts/${contactId}`);
   };
@@ -102,13 +259,90 @@ export default function ContactsPage() {
     setPage(1); // Reset to first page when changing limit
   };
 
+  // Render cell value based on column key
+  const renderCellValue = (contact: Contact, columnKey: string) => {
+    switch (columnKey) {
+      case "first_name":
+      case "last_name":
+        return (
+          <span className="font-medium">{contact[columnKey] || "-"}</span>
+        );
+
+      case "contact_status":
+        return contact.contact_status ? (
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+              contact.contact_status === "Call"
+                ? "bg-green-100 text-green-700"
+                : contact.contact_status === "Email"
+                  ? "bg-blue-100 text-blue-700"
+                  : contact.contact_status === "LinkedIn"
+                    ? "bg-indigo-100 text-indigo-700"
+                    : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            {contact.contact_status}
+          </span>
+        ) : (
+          "-"
+        );
+
+      case "contact_date":
+        return contact.contact_date
+          ? format(new Date(contact.contact_date), "PP")
+          : "-";
+
+      case "contacted":
+        return contact.contacted ? (
+          <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+            Yes
+          </span>
+        ) : (
+          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+            No
+          </span>
+        );
+
+      case "created_at":
+        return contact.created_at
+          ? format(new Date(contact.created_at), "PP")
+          : "-";
+
+      case "email_1":
+      case "email_2":
+      case "email_3":
+        return contact[columnKey] ? (
+          <a
+            href={`mailto:${contact[columnKey]}`}
+            className="text-blue-600 hover:text-blue-800 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {contact[columnKey]}
+          </a>
+        ) : (
+          "-"
+        );
+
+      default:
+        return contact[columnKey] || "-";
+    }
+  };
+
+  // Get visible column configs in order
+  const getVisibleColumnConfigs = () => {
+    return visibleColumns
+      .map((key) => ALL_COLUMNS.find((col) => col.key === key))
+      .filter(Boolean) as ColumnConfig[];
+  };
+
   if (error) {
     return (
-      <div className="rounded-md bg-red-50 p-4 text-red-600">
-        Error: {error}
-      </div>
+      <div className="rounded-md bg-red-50 p-4 text-red-600">Error: {error}</div>
     );
   }
+
+  const visibleColumnConfigs = getVisibleColumnConfigs();
+  const totalColumnSpan = visibleColumnConfigs.length + 1; // +1 for actions column
 
   return (
     <div className="space-y-6 p-6">
@@ -124,23 +358,68 @@ export default function ContactsPage() {
         </Link>
       </div>
 
+      {/* Controls Row: Column Customizer and Bulk Delete */}
+      <div className="flex items-center gap-4 flex-wrap">
+        {/* Column Customizer */}
+        <ColumnCustomizer
+          allColumns={ALL_COLUMNS}
+          defaultColumns={DEFAULT_COLUMNS}
+          visibleColumns={visibleColumns}
+          onColumnsChange={setVisibleColumns}
+          storageKey={STORAGE_KEY}
+        />
+
+        {/* Bulk Delete Controls */}
+        <div className="flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm">
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="bulkDeleteRange"
+              className="text-sm font-medium text-gray-700"
+            >
+              Delete Rows:
+            </label>
+            <input
+              id="bulkDeleteRange"
+              type="text"
+              value={bulkDeleteRange}
+              onChange={(e) => {
+                setBulkDeleteRange(e.target.value);
+                setBulkDeleteError(null);
+              }}
+              placeholder="e.g., 18-37"
+              className="h-9 w-32 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+            />
+            <button
+              onClick={handleBulkDeleteClick}
+              className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              disabled={!bulkDeleteRange.trim()}
+            >
+              <Trash2 className="h-4 w-4" />
+              Bulk Delete
+            </button>
+          </div>
+          {bulkDeleteError && (
+            <span className="text-sm text-red-600">{bulkDeleteError}</span>
+          )}
+        </div>
+
+        <span className="ml-auto text-xs text-gray-500">
+          Current page rows: {(page - 1) * limit + 1} -{" "}
+          {Math.min(page * limit, totalCount)}
+        </span>
+      </div>
+
       <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
         {/* Table Container with Horizontal Scroll */}
         <div className="overflow-x-auto">
-          <Table className="min-w-[1350px]">
+          <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[150px]">First Name</TableHead>
-                <TableHead className="w-[150px]">Last Name</TableHead>
-                <TableHead className="w-[180px]">Organization</TableHead>
-                <TableHead className="w-[150px]">Job Title</TableHead>
-                <TableHead className="w-[140px]">Mobile 1</TableHead>
-                <TableHead className="w-[180px]">Email 1</TableHead>
-                <TableHead className="w-[120px]">City</TableHead>
-                <TableHead className="w-[100px]">State</TableHead>
-                <TableHead className="w-[100px]">Country</TableHead>
-                <TableHead className="w-[120px]">Status</TableHead>
-                <TableHead className="w-[120px]">Contact Date</TableHead>
+                {visibleColumnConfigs.map((column) => (
+                  <TableHead key={column.key} style={{ width: column.width }}>
+                    {column.label}
+                  </TableHead>
+                ))}
                 <TableHead className="w-[80px] text-center sticky right-0 bg-white shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]">
                   Actions
                 </TableHead>
@@ -149,16 +428,16 @@ export default function ContactsPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-<TableCell colSpan={12} className="h-24 text-center">
-                      <div className="flex justify-center items-center">
-                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                      </div>
-                    </TableCell>
+                  <TableCell colSpan={totalColumnSpan} className="h-24 text-center">
+                    <div className="flex justify-center items-center">
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ) : contacts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={12}
+                    colSpan={totalColumnSpan}
                     className="h-24 text-center text-gray-500"
                   >
                     No contacts found.
@@ -171,43 +450,11 @@ export default function ContactsPage() {
                     className="cursor-pointer hover:bg-gray-50 bg-white"
                     onClick={() => handleRowClick(contact.id)}
                   >
-                    <TableCell className="font-medium">
-                      {contact.first_name || "-"}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {contact.last_name || "-"}
-                    </TableCell>
-                    <TableCell>{contact.organization || "-"}</TableCell>
-                    <TableCell>{contact.job_title || "-"}</TableCell>
-                    <TableCell>{contact.mobile_1 || "-"}</TableCell>
-                    <TableCell>{contact.email_1 || "-"}</TableCell>
-                    <TableCell>{contact.city || "-"}</TableCell>
-                    <TableCell>{contact.state || "-"}</TableCell>
-                    <TableCell>{contact.country || "-"}</TableCell>
-                    <TableCell>
-                      {contact.contact_status ? (
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                            contact.contact_status === "Call"
-                              ? "bg-green-100 text-green-700"
-                              : contact.contact_status === "Email"
-                                ? "bg-blue-100 text-blue-700"
-                                : contact.contact_status === "LinkedIn"
-                                  ? "bg-indigo-100 text-indigo-700"
-                                  : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {contact.contact_status}
-                        </span>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {contact.contact_date
-                        ? format(new Date(contact.contact_date), "PP")
-                        : "-"}
-                    </TableCell>
+                    {visibleColumnConfigs.map((column) => (
+                      <TableCell key={column.key}>
+                        {renderCellValue(contact, column.key)}
+                      </TableCell>
+                    ))}
                     <TableCell
                       className="text-center sticky right-0 bg-white shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]"
                       onClick={(e) => e.stopPropagation()}
@@ -247,7 +494,8 @@ export default function ContactsPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {/* Previous Button */}
             <button
               onClick={() => handlePageChange(page - 1)}
               disabled={page <= 1}
@@ -255,9 +503,73 @@ export default function ContactsPage() {
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-sm font-medium text-gray-900">
-              Page {page} of {totalPages}
-            </span>
+
+            {/* Page Numbers */}
+            {(() => {
+              const pages: (number | string)[] = [];
+
+              if (totalPages <= 7) {
+                for (let i = 1; i <= totalPages; i++) {
+                  pages.push(i);
+                }
+              } else {
+                pages.push(1);
+
+                if (page > 3) {
+                  pages.push("...");
+                }
+
+                const start = Math.max(2, page - 1);
+                const end = Math.min(totalPages - 1, page + 1);
+
+                for (let i = start; i <= end; i++) {
+                  if (!pages.includes(i)) {
+                    pages.push(i);
+                  }
+                }
+
+                if (page < totalPages - 2) {
+                  pages.push("...");
+                }
+
+                if (!pages.includes(totalPages)) {
+                  pages.push(totalPages);
+                }
+              }
+
+              return pages.map((p, idx) => {
+                if (p === "...") {
+                  return (
+                    <span
+                      key={`ellipsis-${idx}`}
+                      className="flex h-8 w-8 items-center justify-center text-gray-500"
+                    >
+                      ...
+                    </span>
+                  );
+                }
+
+                const pageNum = p as number;
+                const isCurrentPage = pageNum === page;
+                const isLastPage = pageNum === totalPages;
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`flex h-8 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors ${
+                      isCurrentPage
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {isLastPage && totalPages > 7 ? "Last" : pageNum}
+                  </button>
+                );
+              });
+            })()}
+
+            {/* Next Button */}
             <button
               onClick={() => handlePageChange(page + 1)}
               disabled={page >= totalPages}
@@ -291,6 +603,46 @@ export default function ContactsPage() {
                 className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20"
               >
                 Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Bulk Delete Contacts
+            </h3>
+            <p className="mt-2 text-gray-500">
+              Are you sure you want to delete all these row datas?
+            </p>
+            <p className="mt-2 text-sm font-medium text-red-600">
+              {bulkDeleteIds.length} contact(s) will be permanently deleted.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={cancelBulkDelete}
+                disabled={isBulkDeleting}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
+              >
+                No
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 disabled:opacity-50"
+              >
+                {isBulkDeleting ? (
+                  <span className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    Deleting...
+                  </span>
+                ) : (
+                  "Yes"
+                )}
               </button>
             </div>
           </div>
