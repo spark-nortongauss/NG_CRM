@@ -185,44 +185,69 @@ export async function POST(request: NextRequest) {
         // Initialize Supabase client
         const supabase = await createClient();
 
-        // Get existing emails for duplicate checking
-        const existingEmails = new Set<string>();
-        const emailsToCheck = rows
-            .map(row => row["Email 1"] || "")
-            .filter(email => email && email.length > 0);
+        // Helper function to create a unique key for duplicate detection
+        // Based on: First Name, Last Name, Organization, and Job Title
+        const createDuplicateKey = (firstName: string, lastName: string, organization: string, jobTitle: string): string => {
+            return `${firstName.toLowerCase().trim()}|${lastName.toLowerCase().trim()}|${organization.toLowerCase().trim()}|${jobTitle.toLowerCase().trim()}`;
+        };
 
-        if (emailsToCheck.length > 0) {
-            const { data: existingContacts } = await supabase
-                .from("contacts")
-                .select("email_1")
-                .in("email_1", emailsToCheck);
+        // Collect all unique combinations from uploaded rows for duplicate checking
+        const uploadedContactKeys = rows.map(row => ({
+            firstName: row["First Name"] || "",
+            lastName: row["Last Name"] || "",
+            organization: row["Organization"] || "",
+            jobTitle: row["Job Title"] || "",
+        }));
 
-            if (existingContacts) {
-                existingContacts.forEach(contact => {
-                    if (contact.email_1) {
-                        existingEmails.add(contact.email_1.toLowerCase());
-                    }
-                });
-            }
+        // Get existing contacts for duplicate checking based on first_name, last_name, organization, job_title
+        const existingContactKeys = new Set<string>();
+        
+        // Fetch existing contacts that might match any of the uploaded data
+        // We need to check for contacts with matching first_name, last_name, organization, job_title combination
+        const { data: existingContacts } = await supabase
+            .from("contacts")
+            .select("first_name, last_name, organization, job_title");
+
+        if (existingContacts) {
+            existingContacts.forEach(contact => {
+                const key = createDuplicateKey(
+                    contact.first_name || "",
+                    contact.last_name || "",
+                    contact.organization || "",
+                    contact.job_title || ""
+                );
+                existingContactKeys.add(key);
+            });
         }
 
         // Transform and filter contacts
         const contactsToInsert: ContactRecord[] = [];
-        const duplicates: string[] = [];
+        const duplicates: Array<{ firstName: string; lastName: string; organization: string; jobTitle: string }> = [];
         const errors: Array<{ row: number; error: string }> = [];
+        const seenContactKeys = new Set<string>(); // Track duplicates within the same file
 
         rows.forEach((row, index) => {
-            const email1 = row["Email 1"] || "";
+            const firstName = row["First Name"] || "";
+            const lastName = row["Last Name"] || "";
+            const organization = row["Organization"] || "";
+            const jobTitle = row["Job Title"] || "";
 
-            // Check for duplicates
-            if (email1 && existingEmails.has(email1.toLowerCase())) {
-                duplicates.push(email1);
+            // Create duplicate key based on First Name, Last Name, Organization, Job Title
+            const duplicateKey = createDuplicateKey(firstName, lastName, organization, jobTitle);
+
+            // Check for duplicates against existing database records
+            if (existingContactKeys.has(duplicateKey)) {
+                duplicates.push({ firstName, lastName, organization, jobTitle });
+                return;
+            }
+
+            // Check for duplicates within the same uploaded file
+            if (seenContactKeys.has(duplicateKey)) {
+                duplicates.push({ firstName, lastName, organization, jobTitle });
                 return;
             }
 
             // Validate required fields
-            const firstName = row["First Name"] || "";
-            const lastName = row["Last Name"] || "";
             if (!firstName && !lastName) {
                 errors.push({
                     row: index + 2, // +2 because index is 0-based and header is row 1
@@ -248,12 +273,14 @@ export async function POST(request: NextRequest) {
             const coldCallStatus = parseOutreachStatus(row["Cold Call"]);
             const coldEmailStatus = parseOutreachStatus(row["Cold E-mail"] || row["Cold Email"]);
 
+            const email1 = row["Email 1"] || "";
+
             // Create contact record with sanitized values
             const contact: ContactRecord = {
                 first_name: firstName,
                 last_name: lastName,
-                organization: row["Organization"] || "",
-                job_title: row["Job Title"] || "",
+                organization: organization,
+                job_title: jobTitle,
                 linkedin_url: row["LinkedIn URL"] || "",
                 mobile_1: row["Mobile 1"] || "",
                 mobile_2: row["Mobile 2"] || "",
@@ -274,10 +301,8 @@ export async function POST(request: NextRequest) {
 
             contactsToInsert.push(contact);
 
-            // Add to existing emails to prevent duplicates within the same file
-            if (email1) {
-                existingEmails.add(email1.toLowerCase());
-            }
+            // Add to seen keys to prevent duplicates within the same file
+            seenContactKeys.add(duplicateKey);
         });
 
         // Insert contacts into database
@@ -302,6 +327,11 @@ export async function POST(request: NextRequest) {
             insertedCount = data?.length || 0;
         }
 
+        // Format duplicate info for response
+        const duplicateInfo = duplicates.map(d => 
+            `${d.firstName} ${d.lastName}${d.organization ? ` at ${d.organization}` : ""}${d.jobTitle ? ` (${d.jobTitle})` : ""}`
+        );
+
         return NextResponse.json({
             success: true,
             message: "File processed successfully",
@@ -312,7 +342,7 @@ export async function POST(request: NextRequest) {
                 errors: errors.length,
             },
             details: {
-                duplicateEmails: duplicates,
+                duplicateContacts: duplicateInfo,
                 errors: errors,
             },
         });

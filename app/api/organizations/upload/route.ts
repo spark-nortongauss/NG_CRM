@@ -290,8 +290,70 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: "No valid data found to insert." });
     }
 
+    // Get all legal names from the upload for duplicate checking
+    const uploadedLegalNames = organizationsToInsert
+      .map(item => item.orgData.legal_name as string)
+      .filter(name => name && name.length > 0);
+
+    // Check for existing organizations with matching legal names in the database
+    const existingLegalNames = new Set<string>();
+    if (uploadedLegalNames.length > 0) {
+      const { data: existingOrgs } = await supabase
+        .from("organizations")
+        .select("legal_name")
+        .in("legal_name", uploadedLegalNames);
+
+      if (existingOrgs) {
+        existingOrgs.forEach(org => {
+          if (org.legal_name) {
+            existingLegalNames.add(org.legal_name.toLowerCase());
+          }
+        });
+      }
+    }
+
+    // Filter out duplicates (matching legal_name in database)
+    const uniqueOrganizations: typeof organizationsToInsert = [];
+    const duplicates: string[] = [];
+    const seenLegalNames = new Set<string>(); // Track duplicates within the same file
+
+    for (const item of organizationsToInsert) {
+      const legalName = (item.orgData.legal_name as string || "").toLowerCase();
+      
+      // Check if duplicate exists in database
+      if (existingLegalNames.has(legalName)) {
+        duplicates.push(item.orgData.legal_name as string);
+        continue;
+      }
+      
+      // Check if duplicate exists within the same uploaded file
+      if (seenLegalNames.has(legalName)) {
+        duplicates.push(item.orgData.legal_name as string);
+        continue;
+      }
+      
+      seenLegalNames.add(legalName);
+      uniqueOrganizations.push(item);
+    }
+
+    // If all records are duplicates, return early
+    if (uniqueOrganizations.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: "All organizations are duplicates. No new data inserted.",
+        summary: {
+          total: organizationsToInsert.length,
+          inserted: 0,
+          duplicates: duplicates.length,
+        },
+        details: {
+          duplicateLegalNames: duplicates,
+        },
+      });
+    }
+
     // Separate org data and tags
-    const orgsData = organizationsToInsert.map(item => item.orgData);
+    const orgsData = uniqueOrganizations.map(item => item.orgData);
 
     // Insert organizations
     const { data, error } = await supabase
@@ -313,8 +375,8 @@ export async function POST(request: NextRequest) {
       
       // Match inserted orgs with their tags by index
       data.forEach((insertedOrg, index) => {
-        if (index < organizationsToInsert.length) {
-          const tags = organizationsToInsert[index].tags;
+        if (index < uniqueOrganizations.length) {
+          const tags = uniqueOrganizations[index].tags;
           tags.forEach(tag => {
             tagsToInsert.push({
               org_id: insertedOrg.org_id,
@@ -339,7 +401,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `Successfully processed ${organizationsToInsert.length} organizations.`,
-      inserted: data?.length || 0
+      summary: {
+        total: organizationsToInsert.length,
+        inserted: data?.length || 0,
+        duplicates: duplicates.length,
+      },
+      details: {
+        duplicateLegalNames: duplicates,
+      },
     });
 
   } catch (error) {

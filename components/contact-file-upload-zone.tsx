@@ -28,7 +28,7 @@ interface UploadedFile {
       errors: number;
     };
     details?: {
-      duplicateEmails?: string[];
+      duplicateContacts?: string[];
       errors: Array<{ row: number; error: string }>;
     };
   };
@@ -327,6 +327,24 @@ export function ContactFileUploadZone() {
                       </div>
                     </div>
                   )}
+
+                  {file.uploadResponse.details?.duplicateContacts &&
+                    file.uploadResponse.details.duplicateContacts.length > 0 && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2.5">
+                        <p className="text-[11px] font-semibold text-yellow-900 mb-1.5">
+                          Duplicate Contacts (skipped):
+                        </p>
+                        <div className="text-[11px] text-yellow-700 space-y-1 max-h-24 overflow-y-auto">
+                          {file.uploadResponse.details.duplicateContacts.map(
+                            (contact, idx) => (
+                              <div key={idx}>
+                                • {contact}
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                   {file.uploadResponse.details?.errors &&
                     file.uploadResponse.details.errors.length > 0 && (

@@ -25,11 +25,11 @@ interface UploadedFile {
       total: number;
       inserted: number;
       duplicates: number;
-      errors: number;
+      errors?: number;
     };
     details?: {
-      duplicateNames?: string[];
-      errors: Array<{ row: number; error: string }>;
+      duplicateLegalNames?: string[];
+      errors?: Array<{ row: number; error: string }>;
     };
   };
 }
@@ -344,6 +344,24 @@ export function OrganizationFileUploadZone() {
                       </div>
                     </div>
                   )}
+
+                  {file.uploadResponse.details?.duplicateLegalNames &&
+                    file.uploadResponse.details.duplicateLegalNames.length > 0 && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2.5">
+                        <p className="text-[11px] font-semibold text-yellow-900 mb-1.5">
+                          Duplicate Organizations (skipped):
+                        </p>
+                        <div className="text-[11px] text-yellow-700 space-y-1 max-h-24 overflow-y-auto">
+                          {file.uploadResponse.details.duplicateLegalNames.map(
+                            (name, idx) => (
+                              <div key={idx}>
+                                • {name}
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                   {file.uploadResponse.details?.errors &&
                     file.uploadResponse.details.errors.length > 0 && (
