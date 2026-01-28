@@ -289,7 +289,7 @@ export default function ContactsPage() {
                   ? "bg-blue-100 text-blue-700"
                   : contact.contact_status === "LinkedIn"
                     ? "bg-indigo-100 text-indigo-700"
-                    : "bg-gray-100 text-gray-700"
+                    : "bg-red-100 text-red-700"
             }`}
           >
             {contact.contact_status}
@@ -309,7 +309,7 @@ export default function ContactsPage() {
             Yes
           </span>
         ) : (
-          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+          <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
             No
           </span>
         );
@@ -323,7 +323,7 @@ export default function ContactsPage() {
             Done
           </span>
         ) : (
-          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+          <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
             Not Done
           </span>
         );
