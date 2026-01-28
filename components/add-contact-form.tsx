@@ -36,6 +36,9 @@ export function AddContactForm() {
     state: "",
     country: "",
     contact_status: "",
+    linkedin_status: "Not Done",
+    cold_call_status: "Not Done",
+    cold_email_status: "Not Done",
     contact_date: "",
     contacted: false,
   });
@@ -104,6 +107,9 @@ export function AddContactForm() {
         state: "",
         country: "",
         contact_status: "",
+        linkedin_status: "Not Done",
+        cold_call_status: "Not Done",
+        cold_email_status: "Not Done",
         contact_date: "",
         contacted: false,
       });
@@ -383,6 +389,80 @@ export function AddContactForm() {
               />
               Contacted
             </label>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5.5: Outreach Status */}
+      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">
+            Outreach Status
+          </h2>
+          <p className="text-xs text-gray-500">
+            Track outreach channels - toggle between Done and Not Done.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="linkedin_status">LinkedIn</Label>
+            <button
+              type="button"
+              onClick={() =>
+                setForm((prev) => ({
+                  ...prev,
+                  linkedin_status:
+                    prev.linkedin_status === "Done" ? "Not Done" : "Done",
+                }))
+              }
+              className={`h-9 w-full rounded-md border px-3 text-sm font-medium transition-colors ${
+                form.linkedin_status === "Done"
+                  ? "border-green-500 bg-green-50 text-green-700 hover:bg-green-100"
+                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {form.linkedin_status}
+            </button>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cold_call_status">Cold Call</Label>
+            <button
+              type="button"
+              onClick={() =>
+                setForm((prev) => ({
+                  ...prev,
+                  cold_call_status:
+                    prev.cold_call_status === "Done" ? "Not Done" : "Done",
+                }))
+              }
+              className={`h-9 w-full rounded-md border px-3 text-sm font-medium transition-colors ${
+                form.cold_call_status === "Done"
+                  ? "border-green-500 bg-green-50 text-green-700 hover:bg-green-100"
+                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {form.cold_call_status}
+            </button>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cold_email_status">Cold E-mail</Label>
+            <button
+              type="button"
+              onClick={() =>
+                setForm((prev) => ({
+                  ...prev,
+                  cold_email_status:
+                    prev.cold_email_status === "Done" ? "Not Done" : "Done",
+                }))
+              }
+              className={`h-9 w-full rounded-md border px-3 text-sm font-medium transition-colors ${
+                form.cold_email_status === "Done"
+                  ? "border-green-500 bg-green-50 text-green-700 hover:bg-green-100"
+                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {form.cold_email_status}
+            </button>
           </div>
         </div>
       </section>

@@ -36,6 +36,9 @@ interface Contact {
   state: string | null;
   country: string | null;
   contact_status: string | null;
+  linkedin_status: string | null;
+  cold_call_status: string | null;
+  cold_email_status: string | null;
   contact_date: string | null;
   contacted: boolean;
   created_at: string;
@@ -59,6 +62,9 @@ const ALL_COLUMNS: ColumnConfig[] = [
   { key: "state", label: "State", width: "100px" },
   { key: "country", label: "Country", width: "100px" },
   { key: "contact_status", label: "Status", width: "120px" },
+  { key: "linkedin_status", label: "LinkedIn", width: "100px" },
+  { key: "cold_call_status", label: "Cold Call", width: "100px" },
+  { key: "cold_email_status", label: "Cold E-mail", width: "110px" },
   { key: "contact_date", label: "Contact Date", width: "120px" },
   { key: "contacted", label: "Contacted", width: "100px" },
   { key: "created_at", label: "Created Date", width: "120px" },
@@ -76,6 +82,9 @@ const DEFAULT_COLUMNS = [
   "state",
   "country",
   "contact_status",
+  "linkedin_status",
+  "cold_call_status",
+  "cold_email_status",
   "contact_date",
 ];
 
@@ -300,6 +309,20 @@ export default function ContactsPage() {
         ) : (
           <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
             No
+          </span>
+        );
+
+      case "linkedin_status":
+      case "cold_call_status":
+      case "cold_email_status":
+        const statusValue = contact[columnKey] || "Not Done";
+        return statusValue === "Done" ? (
+          <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+            Done
+          </span>
+        ) : (
+          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+            Not Done
           </span>
         );
 

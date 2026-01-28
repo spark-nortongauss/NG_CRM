@@ -64,6 +64,9 @@ interface ContactRecord {
     state: string;
     country: string;
     contact_status: string;
+    linkedin_status: string;
+    cold_call_status: string;
+    cold_email_status: string;
     contacted: boolean;
 }
 
@@ -231,6 +234,19 @@ export async function POST(request: NextRequest) {
             const contactedValue = (row["Contacted"] || "").toLowerCase();
             const contacted = contactedValue === "yes" || contactedValue === "true" || contactedValue === "1";
 
+            // Map outreach status fields - default to "Not Done" if not provided or invalid
+            const parseOutreachStatus = (value: string | undefined): string => {
+                const normalized = (value || "").trim().toLowerCase();
+                if (normalized === "done" || normalized === "yes" || normalized === "true" || normalized === "1") {
+                    return "Done";
+                }
+                return "Not Done";
+            };
+
+            const linkedinStatus = parseOutreachStatus(row["LinkedIn"]);
+            const coldCallStatus = parseOutreachStatus(row["Cold Call"]);
+            const coldEmailStatus = parseOutreachStatus(row["Cold E-mail"] || row["Cold Email"]);
+
             // Create contact record with sanitized values
             const contact: ContactRecord = {
                 first_name: firstName,
@@ -248,6 +264,9 @@ export async function POST(request: NextRequest) {
                 state: row["State"] || "",
                 country: row["Country"] || "",
                 contact_status: row["Contact Status"] || "Not Contacted",
+                linkedin_status: linkedinStatus,
+                cold_call_status: coldCallStatus,
+                cold_email_status: coldEmailStatus,
                 contacted: contacted,
             };
 

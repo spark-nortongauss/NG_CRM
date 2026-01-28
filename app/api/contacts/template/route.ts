@@ -28,7 +28,10 @@ export async function GET() {
       "State",
       "Country",
       "Contact Status",
-      "Contacted", // Values: yes/no or true/false or 1/0
+      "LinkedIn",        // Values: Done/Not Done (default: Not Done)
+      "Cold Call",       // Values: Done/Not Done (default: Not Done)
+      "Cold E-mail",     // Values: Done/Not Done (default: Not Done)
+      "Contacted",       // Values: yes/no or true/false or 1/0
     ];
 
     // Create CSV content with headers only (no data rows)

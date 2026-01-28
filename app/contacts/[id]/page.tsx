@@ -22,6 +22,9 @@ interface Contact {
   state: string | null;
   country: string | null;
   contact_status: string | null;
+  linkedin_status: string | null;
+  cold_call_status: string | null;
+  cold_email_status: string | null;
   contact_date: string | null;
   contacted: boolean;
   created_at: string;
@@ -292,6 +295,30 @@ export default function ContactDetailPage({
               label="Contact Date"
               field="contact_date"
               type="date"
+            />
+          </div>
+        </section>
+
+        {/* Outreach Status */}
+        <section className="space-y-4">
+          <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+            Outreach Status
+          </h3>
+          <div className="space-y-4">
+            <EditableSelect
+              label="LinkedIn"
+              field="linkedin_status"
+              options={["Not Done", "Done"]}
+            />
+            <EditableSelect
+              label="Cold Call"
+              field="cold_call_status"
+              options={["Not Done", "Done"]}
+            />
+            <EditableSelect
+              label="Cold E-mail"
+              field="cold_email_status"
+              options={["Not Done", "Done"]}
             />
           </div>
         </section>
