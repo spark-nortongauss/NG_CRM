@@ -53,6 +53,7 @@ interface ContactRecord {
     last_name: string;
     organization: string;
     job_title: string;
+    linkedin_url: string;
     mobile_1: string;
     mobile_2: string;
     mobile_3: string;
@@ -253,6 +254,7 @@ export async function POST(request: NextRequest) {
                 last_name: lastName,
                 organization: row["Organization"] || "",
                 job_title: row["Job Title"] || "",
+                linkedin_url: row["LinkedIn URL"] || "",
                 mobile_1: row["Mobile 1"] || "",
                 mobile_2: row["Mobile 2"] || "",
                 mobile_3: row["Mobile 3"] || "",

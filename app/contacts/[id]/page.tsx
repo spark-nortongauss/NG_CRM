@@ -11,6 +11,7 @@ interface Contact {
   last_name: string | null;
   organization: string | null;
   job_title: string | null;
+  linkedin_url: string | null;
   mobile_1: string | null;
   mobile_2: string | null;
   mobile_3: string | null;
@@ -236,6 +237,7 @@ export default function ContactDetailPage({
             <EditableField label="Last Name" field="last_name" />
             <EditableField label="Organization" field="organization" />
             <EditableField label="Job Title" field="job_title" />
+            <EditableField label="LinkedIn URL" field="linkedin_url" type="url" placeholder="https://linkedin.com/in/..." />
           </div>
         </section>
 

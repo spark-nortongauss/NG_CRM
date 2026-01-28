@@ -17,6 +17,8 @@ export async function GET() {
       "First Name",
       "Last Name",
       "Organization",
+      "Job Title",
+      "LinkedIn URL",    // LinkedIn profile URL
       "Mobile 1",
       "Mobile 2",
       "Mobile 3",

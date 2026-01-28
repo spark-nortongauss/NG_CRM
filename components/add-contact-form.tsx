@@ -25,6 +25,7 @@ export function AddContactForm() {
     last_name: "",
     organization: "",
     job_title: "",
+    linkedin_url: "",
     mobile_1: "",
     mobile_2: "",
     mobile_3: "",
@@ -96,6 +97,7 @@ export function AddContactForm() {
         last_name: "",
         organization: "",
         job_title: "",
+        linkedin_url: "",
         mobile_1: "",
         mobile_2: "",
         mobile_3: "",
@@ -194,6 +196,17 @@ export function AddContactForm() {
               value={form.job_title}
               onChange={handleChange}
               placeholder="e.g. Sales Manager"
+            />
+          </div>
+          <div className="space-y-1.5 md:col-span-2">
+            <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+            <Input
+              id="linkedin_url"
+              name="linkedin_url"
+              type="url"
+              value={form.linkedin_url}
+              onChange={handleChange}
+              placeholder="https://linkedin.com/in/username"
             />
           </div>
         </div>

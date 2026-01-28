@@ -25,6 +25,7 @@ interface Contact {
   last_name: string | null;
   organization: string | null;
   job_title: string | null;
+  linkedin_url: string | null;
   mobile_1: string | null;
   mobile_2: string | null;
   mobile_3: string | null;
@@ -51,6 +52,7 @@ const ALL_COLUMNS: ColumnConfig[] = [
   { key: "last_name", label: "Last Name", width: "150px" },
   { key: "organization", label: "Organization", width: "180px" },
   { key: "job_title", label: "Job Title", width: "150px" },
+  { key: "linkedin_url", label: "LinkedIn URL", width: "200px" },
   { key: "mobile_1", label: "Mobile 1", width: "140px" },
   { key: "mobile_2", label: "Mobile 2", width: "140px" },
   { key: "mobile_3", label: "Mobile 3", width: "140px" },
@@ -341,6 +343,21 @@ export default function ContactsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             {contact[columnKey]}
+          </a>
+        ) : (
+          "-"
+        );
+
+      case "linkedin_url":
+        return contact.linkedin_url ? (
+          <a
+            href={contact.linkedin_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {contact.linkedin_url.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, "").replace(/\/$/, "") || "View Profile"}
           </a>
         ) : (
           "-"
