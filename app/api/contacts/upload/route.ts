@@ -191,61 +191,15 @@ export async function POST(request: NextRequest) {
             return `${firstName.toLowerCase().trim()}|${lastName.toLowerCase().trim()}|${organization.toLowerCase().trim()}|${jobTitle.toLowerCase().trim()}`;
         };
 
-        // Collect all unique combinations from uploaded rows for duplicate checking
-        const uploadedContactKeys = rows.map(row => ({
-            firstName: row["First Name"] || "",
-            lastName: row["Last Name"] || "",
-            organization: row["Organization"] || "",
-            jobTitle: row["Job Title"] || "",
-        }));
-
-        // Get existing contacts for duplicate checking based on first_name, last_name, organization, job_title
-        const existingContactKeys = new Set<string>();
-        
-        // Fetch existing contacts that might match any of the uploaded data
-        // We need to check for contacts with matching first_name, last_name, organization, job_title combination
-        const { data: existingContacts } = await supabase
-            .from("contacts")
-            .select("first_name, last_name, organization, job_title");
-
-        if (existingContacts) {
-            existingContacts.forEach(contact => {
-                const key = createDuplicateKey(
-                    contact.first_name || "",
-                    contact.last_name || "",
-                    contact.organization || "",
-                    contact.job_title || ""
-                );
-                existingContactKeys.add(key);
-            });
-        }
-
-        // Transform and filter contacts
-        const contactsToInsert: ContactRecord[] = [];
-        const duplicates: Array<{ firstName: string; lastName: string; organization: string; jobTitle: string }> = [];
+        // Transform rows to contact records first
+        const allContacts: Array<{ contact: ContactRecord; duplicateKey: string; rowIndex: number }> = [];
         const errors: Array<{ row: number; error: string }> = [];
-        const seenContactKeys = new Set<string>(); // Track duplicates within the same file
 
         rows.forEach((row, index) => {
             const firstName = row["First Name"] || "";
             const lastName = row["Last Name"] || "";
             const organization = row["Organization"] || "";
             const jobTitle = row["Job Title"] || "";
-
-            // Create duplicate key based on First Name, Last Name, Organization, Job Title
-            const duplicateKey = createDuplicateKey(firstName, lastName, organization, jobTitle);
-
-            // Check for duplicates against existing database records
-            if (existingContactKeys.has(duplicateKey)) {
-                duplicates.push({ firstName, lastName, organization, jobTitle });
-                return;
-            }
-
-            // Check for duplicates within the same uploaded file
-            if (seenContactKeys.has(duplicateKey)) {
-                duplicates.push({ firstName, lastName, organization, jobTitle });
-                return;
-            }
 
             // Validate required fields
             if (!firstName && !lastName) {
@@ -255,6 +209,9 @@ export async function POST(request: NextRequest) {
                 });
                 return;
             }
+
+            // Create duplicate key based on First Name, Last Name, Organization, Job Title
+            const duplicateKey = createDuplicateKey(firstName, lastName, organization, jobTitle);
 
             // Map contacted field
             const contactedValue = (row["Contacted"] || "").toLowerCase();
@@ -299,14 +256,81 @@ export async function POST(request: NextRequest) {
                 contacted: contacted,
             };
 
-            contactsToInsert.push(contact);
-
-            // Add to seen keys to prevent duplicates within the same file
-            seenContactKeys.add(duplicateKey);
+            allContacts.push({ contact, duplicateKey, rowIndex: index });
         });
 
-        // Insert contacts into database
+        // Handle duplicates within the same file - keep only the last occurrence (most recent)
+        const seenContactKeys = new Map<string, number>(); // Track duplicateKey -> index in allContacts
+        
+        // Process in order, keeping track of latest index for each key
+        allContacts.forEach((item, index) => {
+            seenContactKeys.set(item.duplicateKey, index);
+        });
+        
+        // Only keep the last occurrence of each duplicate key from the file
+        const indicesToKeep = new Set(seenContactKeys.values());
+        const deduplicatedContacts = allContacts.filter((_, index) => indicesToKeep.has(index));
+
+        // Get existing contacts for duplicate checking based on first_name, last_name, organization, job_title
+        const { data: existingContacts } = await supabase
+            .from("contacts")
+            .select("id, first_name, last_name, organization, job_title");
+
+        // Find which uploaded contacts have duplicates in the database
+        const duplicatesUpdated: Array<{ firstName: string; lastName: string; organization: string; jobTitle: string }> = [];
+        const contactIdsToDelete: string[] = [];
+
+        if (existingContacts && existingContacts.length > 0) {
+            // Create a map of duplicate key -> contact id for existing records
+            const existingContactMap = new Map<string, string>();
+            existingContacts.forEach(contact => {
+                const key = createDuplicateKey(
+                    contact.first_name || "",
+                    contact.last_name || "",
+                    contact.organization || "",
+                    contact.job_title || ""
+                );
+                existingContactMap.set(key, contact.id);
+            });
+
+            // Check each contact we want to insert
+            deduplicatedContacts.forEach(item => {
+                const existingId = existingContactMap.get(item.duplicateKey);
+                if (existingId) {
+                    contactIdsToDelete.push(existingId);
+                    duplicatesUpdated.push({
+                        firstName: item.contact.first_name,
+                        lastName: item.contact.last_name,
+                        organization: item.contact.organization,
+                        jobTitle: item.contact.job_title,
+                    });
+                }
+            });
+
+            // Delete the old contact records that will be replaced
+            if (contactIdsToDelete.length > 0) {
+                const { error: deleteError } = await supabase
+                    .from("contacts")
+                    .delete()
+                    .in("id", contactIdsToDelete);
+
+                if (deleteError) {
+                    console.error("Error deleting duplicate contacts:", deleteError);
+                    return NextResponse.json(
+                        {
+                            error: "Failed to update duplicate contacts",
+                            details: deleteError.message
+                        },
+                        { status: 500 }
+                    );
+                }
+            }
+        }
+
+        // Insert all contacts (both new and updated)
+        const contactsToInsert = deduplicatedContacts.map(item => item.contact);
         let insertedCount = 0;
+        
         if (contactsToInsert.length > 0) {
             const { data, error } = await supabase
                 .from("contacts")
@@ -327,22 +351,24 @@ export async function POST(request: NextRequest) {
             insertedCount = data?.length || 0;
         }
 
-        // Format duplicate info for response
-        const duplicateInfo = duplicates.map(d => 
+        // Format updated info for response
+        const updatedInfo = duplicatesUpdated.map(d => 
             `${d.firstName} ${d.lastName}${d.organization ? ` at ${d.organization}` : ""}${d.jobTitle ? ` (${d.jobTitle})` : ""}`
         );
+
+        const newlyInserted = insertedCount - duplicatesUpdated.length;
 
         return NextResponse.json({
             success: true,
             message: "File processed successfully",
             summary: {
                 total: rows.length,
-                inserted: insertedCount,
-                duplicates: duplicates.length,
+                inserted: newlyInserted > 0 ? newlyInserted : 0,
+                updated: duplicatesUpdated.length,
                 errors: errors.length,
             },
             details: {
-                duplicateContacts: duplicateInfo,
+                updatedContacts: updatedInfo,
                 errors: errors,
             },
         });

@@ -290,72 +290,80 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: "No valid data found to insert." });
     }
 
-    // Get all legal names from the upload for duplicate checking
-    const uploadedLegalNames = organizationsToInsert
+    // Handle duplicates within the same file - keep only the last occurrence (most recent)
+    const seenLegalNames = new Map<string, number>(); // Track legal_name -> index
+    const deduplicatedOrganizations: typeof organizationsToInsert = [];
+    
+    // Process in order, keeping track of latest index for each legal_name
+    organizationsToInsert.forEach((item, index) => {
+      const legalNameLower = (item.orgData.legal_name as string || "").toLowerCase();
+      seenLegalNames.set(legalNameLower, index);
+    });
+    
+    // Only keep the last occurrence of each legal_name from the file
+    const indicesToKeep = new Set(seenLegalNames.values());
+    organizationsToInsert.forEach((item, index) => {
+      if (indicesToKeep.has(index)) {
+        deduplicatedOrganizations.push(item);
+      }
+    });
+
+    // Get all legal names from the deduplicated upload
+    const uploadedLegalNames = deduplicatedOrganizations
       .map(item => item.orgData.legal_name as string)
       .filter(name => name && name.length > 0);
 
-    // Check for existing organizations with matching legal names in the database
-    const existingLegalNames = new Set<string>();
+    // Find existing organizations with matching legal names in the database
+    const duplicatesUpdated: string[] = [];
     if (uploadedLegalNames.length > 0) {
       const { data: existingOrgs } = await supabase
         .from("organizations")
-        .select("legal_name")
+        .select("org_id, legal_name")
         .in("legal_name", uploadedLegalNames);
 
-      if (existingOrgs) {
+      if (existingOrgs && existingOrgs.length > 0) {
+        // Create a map of legal_name (lowercase) -> org_id for existing records
+        const existingOrgMap = new Map<string, string>();
         existingOrgs.forEach(org => {
           if (org.legal_name) {
-            existingLegalNames.add(org.legal_name.toLowerCase());
+            existingOrgMap.set(org.legal_name.toLowerCase(), org.org_id);
+            duplicatesUpdated.push(org.legal_name);
           }
         });
-      }
-    }
 
-    // Filter out duplicates (matching legal_name in database)
-    const uniqueOrganizations: typeof organizationsToInsert = [];
-    const duplicates: string[] = [];
-    const seenLegalNames = new Set<string>(); // Track duplicates within the same file
+        // Delete the old organization records (this will cascade to organization_tags due to FK)
+        const orgIdsToDelete = existingOrgs.map(org => org.org_id);
+        
+        // First delete related tags
+        const { error: tagsDeleteError } = await supabase
+          .from("organization_tags")
+          .delete()
+          .in("org_id", orgIdsToDelete);
 
-    for (const item of organizationsToInsert) {
-      const legalName = (item.orgData.legal_name as string || "").toLowerCase();
-      
-      // Check if duplicate exists in database
-      if (existingLegalNames.has(legalName)) {
-        duplicates.push(item.orgData.legal_name as string);
-        continue;
-      }
-      
-      // Check if duplicate exists within the same uploaded file
-      if (seenLegalNames.has(legalName)) {
-        duplicates.push(item.orgData.legal_name as string);
-        continue;
-      }
-      
-      seenLegalNames.add(legalName);
-      uniqueOrganizations.push(item);
-    }
+        if (tagsDeleteError) {
+          console.warn("Error deleting old tags:", tagsDeleteError);
+        }
 
-    // If all records are duplicates, return early
-    if (uniqueOrganizations.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: "All organizations are duplicates. No new data inserted.",
-        summary: {
-          total: organizationsToInsert.length,
-          inserted: 0,
-          duplicates: duplicates.length,
-        },
-        details: {
-          duplicateLegalNames: duplicates,
-        },
-      });
+        // Then delete the organizations
+        const { error: deleteError } = await supabase
+          .from("organizations")
+          .delete()
+          .in("org_id", orgIdsToDelete);
+
+        if (deleteError) {
+          console.error("Error deleting duplicate organizations:", deleteError);
+          return NextResponse.json(
+            { error: "Database error while updating duplicates", details: deleteError.message },
+            { status: 500 }
+          );
+        }
+      }
     }
 
     // Separate org data and tags
-    const orgsData = uniqueOrganizations.map(item => item.orgData);
+    const orgsData = deduplicatedOrganizations.map(item => item.orgData);
 
-    // Insert organizations
+    // Insert all organizations (both new and updated)
     const { data, error } = await supabase
       .from("organizations")
       .insert(orgsData)
@@ -375,8 +383,8 @@ export async function POST(request: NextRequest) {
       
       // Match inserted orgs with their tags by index
       data.forEach((insertedOrg, index) => {
-        if (index < uniqueOrganizations.length) {
-          const tags = uniqueOrganizations[index].tags;
+        if (index < deduplicatedOrganizations.length) {
+          const tags = deduplicatedOrganizations[index].tags;
           tags.forEach(tag => {
             tagsToInsert.push({
               org_id: insertedOrg.org_id,
@@ -398,16 +406,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const newlyInserted = (data?.length || 0) - duplicatesUpdated.length;
+
     return NextResponse.json({
       success: true,
-      message: `Successfully processed ${organizationsToInsert.length} organizations.`,
+      message: `Successfully processed ${deduplicatedOrganizations.length} organizations.`,
       summary: {
         total: organizationsToInsert.length,
-        inserted: data?.length || 0,
-        duplicates: duplicates.length,
+        inserted: newlyInserted > 0 ? newlyInserted : 0,
+        updated: duplicatesUpdated.length,
       },
       details: {
-        duplicateLegalNames: duplicates,
+        updatedOrganizations: duplicatesUpdated,
       },
     });
 

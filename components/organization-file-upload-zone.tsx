@@ -24,11 +24,11 @@ interface UploadedFile {
     summary?: {
       total: number;
       inserted: number;
-      duplicates: number;
+      updated?: number;
       errors?: number;
     };
     details?: {
-      duplicateLegalNames?: string[];
+      updatedOrganizations?: string[];
       errors?: Array<{ row: number; error: string }>;
     };
   };
@@ -317,7 +317,7 @@ export function OrganizationFileUploadZone() {
                   </div>
 
                   {file.uploadResponse.summary && (
-                    <div className="grid grid-cols-4 gap-2 text-[10px]">
+                    <div className="grid grid-cols-3 gap-2 text-[10px]">
                       <div className="bg-blue-50 px-2 py-1.5 rounded-lg text-center">
                         <div className="font-semibold text-blue-900">
                           {file.uploadResponse.summary.total}
@@ -328,31 +328,25 @@ export function OrganizationFileUploadZone() {
                         <div className="font-semibold text-green-900">
                           {file.uploadResponse.summary.inserted}
                         </div>
-                          <div className="text-green-600">Inserted</div>
+                        <div className="text-green-600">New</div>
                       </div>
-                      <div className="bg-yellow-50 px-2 py-1.5 rounded-lg text-center">
-                        <div className="font-semibold text-yellow-900">
-                          {file.uploadResponse.summary.duplicates}
+                      <div className="bg-orange-50 px-2 py-1.5 rounded-lg text-center">
+                        <div className="font-semibold text-orange-900">
+                          {file.uploadResponse.summary.updated || 0}
                         </div>
-                        <div className="text-yellow-600">Duplicates</div>
-                      </div>
-                      <div className="bg-red-50 px-2 py-1.5 rounded-lg text-center">
-                        <div className="font-semibold text-red-900">
-                          {file.uploadResponse.summary.errors}
-                        </div>
-                        <div className="text-red-600">Errors</div>
+                        <div className="text-orange-600">Updated</div>
                       </div>
                     </div>
                   )}
 
-                  {file.uploadResponse.details?.duplicateLegalNames &&
-                    file.uploadResponse.details.duplicateLegalNames.length > 0 && (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2.5">
-                        <p className="text-[11px] font-semibold text-yellow-900 mb-1.5">
-                          Duplicate Organizations (skipped):
+                  {file.uploadResponse.details?.updatedOrganizations &&
+                    file.uploadResponse.details.updatedOrganizations.length > 0 && (
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-2.5">
+                        <p className="text-[11px] font-semibold text-orange-900 mb-1.5">
+                          Updated Organizations (replaced old data):
                         </p>
-                        <div className="text-[11px] text-yellow-700 space-y-1 max-h-24 overflow-y-auto">
-                          {file.uploadResponse.details.duplicateLegalNames.map(
+                        <div className="text-[11px] text-orange-700 space-y-1 max-h-24 overflow-y-auto">
+                          {file.uploadResponse.details.updatedOrganizations.map(
                             (name, idx) => (
                               <div key={idx}>
                                 • {name}
