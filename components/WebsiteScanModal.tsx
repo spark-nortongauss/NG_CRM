@@ -12,6 +12,8 @@ import {
   ExternalLink,
   Plus,
   Building,
+  Linkedin,
+  MapPin,
 } from "lucide-react";
 
 interface ScrapedContact {
@@ -21,13 +23,28 @@ interface ScrapedContact {
   context?: string;
 }
 
+interface ScrapedAddress {
+  fullAddress?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  region?: string;
+  postalCode?: string;
+  country?: string;
+  source: string;
+}
+
 interface ScanResult {
   emails: ScrapedContact[];
   phones: ScrapedContact[];
+  linkedinUrl?: string;
+  address?: ScrapedAddress;
   pagesScanned: string[];
   pagesFailed: string[];
   organizationHasEmail: boolean;
   organizationHasPhone: boolean;
+  organizationHasLinkedin: boolean;
+  organizationHasAddress: boolean;
 }
 
 interface Organization {
@@ -44,6 +61,8 @@ interface WebsiteScanModalProps {
   websiteUrl: string | null;
   hasEmail: boolean;
   hasPhone: boolean;
+  hasLinkedin?: boolean;
+  hasAddress?: boolean;
   onOrganizationUpdated: () => void;
   onContactAdded: () => void;
 }
@@ -56,6 +75,8 @@ export function WebsiteScanModal({
   websiteUrl,
   hasEmail,
   hasPhone,
+  hasLinkedin,
+  hasAddress,
   onOrganizationUpdated,
   onContactAdded,
 }: WebsiteScanModalProps) {
@@ -65,6 +86,10 @@ export function WebsiteScanModal({
   const [savingItems, setSavingItems] = useState<Set<string>>(new Set());
   const [savedItems, setSavedItems] = useState<Set<string>>(new Set());
   const [showDetails, setShowDetails] = useState(false);
+  
+  // Track if LinkedIn/Address were saved during this session
+  const [linkedinSaved, setLinkedinSaved] = useState(false);
+  const [addressSaved, setAddressSaved] = useState(false);
 
   const handleScan = async () => {
     setIsScanning(true);
@@ -254,6 +279,89 @@ export function WebsiteScanModal({
     }
   };
 
+  const handleSaveLinkedinUrl = async (linkedinUrl: string) => {
+    setSavingItems((prev) => new Set(prev).add("linkedin-url"));
+
+    try {
+      const response = await fetch(`/api/organizations/${organizationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ linkedin_url: linkedinUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save LinkedIn URL");
+      }
+
+      setLinkedinSaved(true);
+      setSavedItems((prev) => new Set(prev).add("linkedin-url"));
+      onOrganizationUpdated();
+    } catch (err) {
+      console.error("Error saving LinkedIn URL:", err);
+    } finally {
+      setSavingItems((prev) => {
+        const next = new Set(prev);
+        next.delete("linkedin-url");
+        return next;
+      });
+    }
+  };
+
+  const handleSaveAddress = async (address: ScrapedAddress) => {
+    setSavingItems((prev) => new Set(prev).add("address"));
+
+    try {
+      // Build the update payload with available address fields
+      const updatePayload: Record<string, string | null> = {};
+      
+      if (address.addressLine1) {
+        updatePayload.hq_address_line1 = address.addressLine1;
+      }
+      if (address.addressLine2) {
+        updatePayload.hq_address_line2 = address.addressLine2;
+      }
+      if (address.city) {
+        updatePayload.hq_city = address.city;
+      }
+      if (address.region) {
+        updatePayload.hq_region = address.region;
+      }
+      if (address.postalCode) {
+        updatePayload.hq_postal_code = address.postalCode;
+      }
+      if (address.country) {
+        updatePayload.hq_country_code = address.country;
+      }
+      
+      // If we only have fullAddress, put it in address_line1
+      if (Object.keys(updatePayload).length === 0 && address.fullAddress) {
+        updatePayload.hq_address_line1 = address.fullAddress;
+      }
+
+      const response = await fetch(`/api/organizations/${organizationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save address");
+      }
+
+      setAddressSaved(true);
+      setSavedItems((prev) => new Set(prev).add("address"));
+      onOrganizationUpdated();
+    } catch (err) {
+      console.error("Error saving address:", err);
+    } finally {
+      setSavingItems((prev) => {
+        const next = new Set(prev);
+        next.delete("address");
+        return next;
+      });
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -301,7 +409,7 @@ export function WebsiteScanModal({
                   <p className="text-sm text-gray-500">No website URL configured</p>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {hasEmail && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
                     <Check className="h-3 w-3" /> Has Email
@@ -310,6 +418,16 @@ export function WebsiteScanModal({
                 {hasPhone && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
                     <Check className="h-3 w-3" /> Has Phone
+                  </span>
+                )}
+                {hasLinkedin && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                    <Check className="h-3 w-3" /> Has LinkedIn
+                  </span>
+                )}
+                {hasAddress && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                    <Check className="h-3 w-3" /> Has Address
                   </span>
                 )}
               </div>
@@ -378,7 +496,7 @@ export function WebsiteScanModal({
           {scanResult && (
             <div className="space-y-6">
               {/* Summary */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="rounded-lg bg-blue-50 p-4 text-center">
                   <Mail className="h-8 w-8 mx-auto text-blue-600" />
                   <p className="mt-2 text-2xl font-bold text-blue-600">
@@ -393,7 +511,122 @@ export function WebsiteScanModal({
                   </p>
                   <p className="text-sm text-green-600">Phones Found</p>
                 </div>
+                <div className={`rounded-lg p-4 text-center ${scanResult.linkedinUrl ? 'bg-sky-50' : 'bg-gray-50'}`}>
+                  <Linkedin className={`h-8 w-8 mx-auto ${scanResult.linkedinUrl ? 'text-sky-600' : 'text-gray-400'}`} />
+                  <p className={`mt-2 text-2xl font-bold ${scanResult.linkedinUrl ? 'text-sky-600' : 'text-gray-400'}`}>
+                    {scanResult.linkedinUrl ? '1' : '0'}
+                  </p>
+                  <p className={`text-sm ${scanResult.linkedinUrl ? 'text-sky-600' : 'text-gray-400'}`}>LinkedIn</p>
+                </div>
+                <div className={`rounded-lg p-4 text-center ${scanResult.address ? 'bg-amber-50' : 'bg-gray-50'}`}>
+                  <MapPin className={`h-8 w-8 mx-auto ${scanResult.address ? 'text-amber-600' : 'text-gray-400'}`} />
+                  <p className={`mt-2 text-2xl font-bold ${scanResult.address ? 'text-amber-600' : 'text-gray-400'}`}>
+                    {scanResult.address ? '1' : '0'}
+                  </p>
+                  <p className={`text-sm ${scanResult.address ? 'text-amber-600' : 'text-gray-400'}`}>Address</p>
+                </div>
               </div>
+
+              {/* LinkedIn URL */}
+              {scanResult.linkedinUrl && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                    <Linkedin className="h-4 w-4 text-sky-600" />
+                    LinkedIn Company Page
+                  </h3>
+                  <div className="flex items-center justify-between rounded-lg border bg-white p-3">
+                    <div className="flex-1 min-w-0">
+                      <a
+                        href={scanResult.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-sky-600 hover:underline flex items-center gap-1"
+                      >
+                        {scanResult.linkedinUrl}
+                        <ExternalLink className="h-3 w-3 shrink-0" />
+                      </a>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      {!hasLinkedin && !linkedinSaved && !scanResult.organizationHasLinkedin ? (
+                        <button
+                          onClick={() => handleSaveLinkedinUrl(scanResult.linkedinUrl!)}
+                          disabled={savingItems.has("linkedin-url")}
+                          className="inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium bg-sky-100 text-sky-700 hover:bg-sky-200 transition-colors disabled:opacity-50"
+                        >
+                          {savingItems.has("linkedin-url") ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Building className="h-3 w-3" />
+                          )}
+                          Save to Organization
+                        </button>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                          <Check className="h-3 w-3" />
+                          {linkedinSaved ? 'Saved' : 'Already Set'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Address */}
+              {scanResult.address && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                    <MapPin className="h-4 w-4 text-amber-600" />
+                    HQ Address
+                  </h3>
+                  <div className="rounded-lg border bg-white p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-2">
+                        {scanResult.address.fullAddress && (
+                          <p className="text-sm text-gray-900">{scanResult.address.fullAddress}</p>
+                        )}
+                        {(scanResult.address.addressLine1 || scanResult.address.city || scanResult.address.region || scanResult.address.postalCode || scanResult.address.country) && !scanResult.address.fullAddress && (
+                          <div className="text-sm text-gray-900 space-y-1">
+                            {scanResult.address.addressLine1 && <p>{scanResult.address.addressLine1}</p>}
+                            {scanResult.address.addressLine2 && <p>{scanResult.address.addressLine2}</p>}
+                            <p>
+                              {[
+                                scanResult.address.city,
+                                scanResult.address.region,
+                                scanResult.address.postalCode,
+                              ].filter(Boolean).join(", ")}
+                            </p>
+                            {scanResult.address.country && <p>{scanResult.address.country}</p>}
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-500">
+                          Found on: {scanResult.address.source}
+                        </p>
+                      </div>
+                      <div className="shrink-0">
+                        {!hasAddress && !addressSaved && !scanResult.organizationHasAddress ? (
+                          <button
+                            onClick={() => handleSaveAddress(scanResult.address!)}
+                            disabled={savingItems.has("address")}
+                            className="inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors disabled:opacity-50"
+                          >
+                            {savingItems.has("address") ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Building className="h-3 w-3" />
+                            )}
+                            Save to Organization
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                            <Check className="h-3 w-3" />
+                            {addressSaved ? 'Saved' : 'Already Set'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Scan Details Toggle */}
               <button
@@ -626,7 +859,10 @@ export function WebsiteScanModal({
               )}
 
               {/* No Results */}
-              {scanResult.emails.length === 0 && scanResult.phones.length === 0 && (
+              {scanResult.emails.length === 0 && 
+               scanResult.phones.length === 0 && 
+               !scanResult.linkedinUrl && 
+               !scanResult.address && (
                 <div className="text-center py-8">
                   <AlertCircle className="h-12 w-12 mx-auto text-amber-500" />
                   <p className="mt-4 text-gray-600">

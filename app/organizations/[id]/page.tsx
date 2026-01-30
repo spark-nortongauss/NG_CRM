@@ -588,6 +588,8 @@ export default function OrganizationDetailPage({
         websiteUrl={organization.website_url}
         hasEmail={!!organization.primary_email}
         hasPhone={!!organization.primary_phone_e164}
+        hasLinkedin={!!organization.linkedin_url}
+        hasAddress={!!organization.hq_address_line1}
         onOrganizationUpdated={() => {
           fetchOrganization();
         }}
