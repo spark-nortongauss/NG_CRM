@@ -340,18 +340,15 @@ export default function OrganizationDetailPage({
             <Globe className="h-4 w-4" />
             Scan Website
           </button>
-          {/* Only show Apollo search button if no contacts exist (to save credits) */}
-          {!contactsLoading && contacts.length === 0 && (
-            <button
-              onClick={() => setShowApolloSearchModal(true)}
-              disabled={!organization.website_url}
-              className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              title={organization.website_url ? "Search Apollo.io for contacts" : "Add a website URL first"}
-            >
-              <Search className="h-4 w-4" />
-              Find Contacts (Apollo)
-            </button>
-          )}
+          <button
+            onClick={() => setShowApolloSearchModal(true)}
+            disabled={!organization.website_url}
+            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title={organization.website_url ? "Search Apollo.io for contacts" : "Add a website URL first"}
+          >
+            <Search className="h-4 w-4" />
+            Find Contacts (Apollo)
+          </button>
         </div>
       </div>
 
