@@ -36,7 +36,7 @@ export async function GET(
         // Fetch contacts where organization matches legal_name or trade_name
         const { data: contacts, error: contactsError } = await supabase
             .from("contacts")
-            .select("id, first_name, last_name, job_title, fixed_number, email_1, organization")
+            .select("id, first_name, last_name, job_title, fixed_number, email_1, linkedin_url, organization")
             .in("organization", orgNames)
             .order("first_name", { ascending: true });
 

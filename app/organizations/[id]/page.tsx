@@ -3,8 +3,10 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Check, Loader2, Users } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Users, Globe, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { WebsiteScanModal } from "@/components/WebsiteScanModal";
+import { ApolloSearchModal } from "@/components/ApolloSearchModal";
 
 interface OrganizationContact {
   id: string;
@@ -13,6 +15,7 @@ interface OrganizationContact {
   job_title: string | null;
   fixed_number: string | null;
   email_1: string | null;
+  linkedin_url: string | null;
   organization: string | null;
 }
 
@@ -71,6 +74,8 @@ export default function OrganizationDetailPage({
   const [contactsLoading, setContactsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingField, setSavingField] = useState<string | null>(null);
+  const [showWebsiteScanModal, setShowWebsiteScanModal] = useState(false);
+  const [showApolloSearchModal, setShowApolloSearchModal] = useState(false);
 
   useEffect(() => {
     fetchOrganization();
@@ -185,6 +190,108 @@ export default function OrganizationDetailPage({
     );
   };
 
+  // Component for displaying multi-value fields (comma-separated) with line breaks
+  const MultiValueDisplayField = ({
+    label,
+    field,
+    type = "text",
+  }: {
+    label: string;
+    field: string;
+    type?: "email" | "tel" | "text";
+  }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [localValue, setLocalValue] = useState(
+      organization?.[field]?.toString() || ""
+    );
+
+    useEffect(() => {
+      setLocalValue(organization?.[field]?.toString() || "");
+    }, [organization, field]);
+
+    const values = localValue ? localValue.split(",").map((v: string) => v.trim()).filter(Boolean) : [];
+
+    const handleSave = () => {
+      handleUpdate(field, localValue);
+      setIsEditing(false);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSave();
+      }
+      if (e.key === "Escape") {
+        setLocalValue(organization?.[field]?.toString() || "");
+        setIsEditing(false);
+      }
+    };
+
+    return (
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+          {label}
+        </label>
+        {isEditing ? (
+          <div className="space-y-2">
+            <textarea
+              value={localValue}
+              onChange={(e) => setLocalValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={handleSave}
+              placeholder="Enter values separated by commas"
+              className="w-full min-h-[80px] rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              autoFocus
+            />
+            <p className="text-xs text-gray-400">
+              Separate multiple values with commas. Press Enter to save, Esc to cancel.
+            </p>
+          </div>
+        ) : (
+          <div
+            onClick={() => setIsEditing(true)}
+            className="min-h-[38px] rounded-md border border-gray-200 bg-white px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            {values.length > 0 ? (
+              <div className="space-y-1">
+                {values.map((value: string, index: number) => (
+                  <div key={index} className="text-sm">
+                    {type === "email" ? (
+                      <a
+                        href={`mailto:${value}`}
+                        className="text-blue-600 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {value}
+                      </a>
+                    ) : type === "tel" ? (
+                      <a
+                        href={`tel:${value}`}
+                        className="text-blue-600 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {value}
+                      </a>
+                    ) : (
+                      <span className="text-gray-900">{value}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="text-gray-400">-</span>
+            )}
+            {savingField === field && (
+              <div className="flex justify-end">
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -204,20 +311,47 @@ export default function OrganizationDetailPage({
   return (
     <div className="max-w-5xl mx-auto p-6 pb-20 space-y-8">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={() => router.back()}
-          className="p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-        >
-          <ArrowLeft className="h-6 w-6" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {organization.legal_name}
-          </h1>
-          <p className="text-sm text-gray-500">
-            Created {new Date(organization.created_at).toLocaleDateString()}
-          </p>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+          >
+            <ArrowLeft className="h-6 w-6" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {organization.legal_name}
+            </h1>
+            <p className="text-sm text-gray-500">
+              Created {new Date(organization.created_at).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+
+        {/* Contact Discovery Buttons */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowWebsiteScanModal(true)}
+            disabled={!organization.website_url}
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title={organization.website_url ? "Scan website for contact info" : "Add a website URL first"}
+          >
+            <Globe className="h-4 w-4" />
+            Scan Website
+          </button>
+          {/* Only show Apollo search button if no contacts exist (to save credits) */}
+          {!contactsLoading && contacts.length === 0 && (
+            <button
+              onClick={() => setShowApolloSearchModal(true)}
+              disabled={!organization.website_url}
+              className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title={organization.website_url ? "Search Apollo.io for contacts" : "Add a website URL first"}
+            >
+              <Search className="h-4 w-4" />
+              Find Contacts (Apollo)
+            </button>
+          )}
         </div>
       </div>
 
@@ -241,9 +375,9 @@ export default function OrganizationDetailPage({
             Contact Information
           </h3>
           <div className="space-y-4">
-            <EditableField label="Email" field="primary_email" type="email" />
-            <EditableField
-              label="Phone"
+            <MultiValueDisplayField label="Email(s)" field="primary_email" type="email" />
+            <MultiValueDisplayField
+              label="Phone(s)"
               field="primary_phone_e164"
               type="tel"
             />
@@ -351,10 +485,13 @@ export default function OrganizationDetailPage({
                       Job Title
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Fixed Number
+                      Phone
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Email
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      LinkedIn
                     </th>
                   </tr>
                 </thead>
@@ -388,6 +525,21 @@ export default function OrganizationDetailPage({
                             onClick={(e) => e.stopPropagation()}
                           >
                             {contact.email_1}
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                        {contact.linkedin_url ? (
+                          <a
+                            href={contact.linkedin_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            View Profile
                           </a>
                         ) : (
                           "-"
@@ -429,6 +581,40 @@ export default function OrganizationDetailPage({
           </div>
         </section>
       </div>
+
+      {/* Website Scan Modal */}
+      <WebsiteScanModal
+        isOpen={showWebsiteScanModal}
+        onClose={() => setShowWebsiteScanModal(false)}
+        organizationId={organization.org_id}
+        organizationName={organization.legal_name}
+        websiteUrl={organization.website_url}
+        hasEmail={!!organization.primary_email}
+        hasPhone={!!organization.primary_phone_e164}
+        onOrganizationUpdated={() => {
+          fetchOrganization();
+        }}
+        onContactAdded={() => {
+          fetchContacts();
+        }}
+      />
+
+      {/* Apollo Search Modal */}
+      <ApolloSearchModal
+        isOpen={showApolloSearchModal}
+        onClose={() => setShowApolloSearchModal(false)}
+        organizationId={organization.org_id}
+        organizationName={organization.legal_name}
+        websiteUrl={organization.website_url}
+        hasEmail={!!organization.primary_email}
+        hasPhone={!!organization.primary_phone_e164}
+        onOrganizationUpdated={() => {
+          fetchOrganization();
+        }}
+        onContactAdded={() => {
+          fetchContacts();
+        }}
+      />
     </div>
   );
 }
