@@ -204,10 +204,10 @@ const LINKEDIN_COMPANY_REGEX = /https?:\/\/(?:www\.)?linkedin\.com\/company\/[a-
 // Extract LinkedIn company URL from HTML
 function extractLinkedinUrl(html: string, pageUrl: string): string | null {
   const $ = cheerio.load(html);
-  
+
   // First, check for explicit LinkedIn links
   const linkedinLinks: string[] = [];
-  
+
   // Check all anchor tags
   $('a[href*="linkedin.com/company"]').each((_, element) => {
     const href = $(element).attr("href");
@@ -215,12 +215,12 @@ function extractLinkedinUrl(html: string, pageUrl: string): string | null {
       linkedinLinks.push(href);
     }
   });
-  
+
   // Also check for LinkedIn links in the text content
   const textContent = $.html();
   const matches = textContent.match(LINKEDIN_COMPANY_REGEX) || [];
   linkedinLinks.push(...matches);
-  
+
   // Return the first valid LinkedIn company URL found
   for (const url of linkedinLinks) {
     // Clean the URL - remove trailing slashes and query params
@@ -229,7 +229,7 @@ function extractLinkedinUrl(html: string, pageUrl: string): string | null {
       return cleanUrl;
     }
   }
-  
+
   return null;
 }
 
@@ -264,19 +264,19 @@ const COUNTRY_PATTERNS = [
 // Extract address from HTML
 function extractAddress(html: string, pageUrl: string): ScrapedAddress | null {
   const $ = cheerio.load(html);
-  
+
   // Remove script and style tags
   $("script, style, noscript").remove();
-  
+
   // Look for structured address data first (Schema.org)
   const schemaAddress = extractSchemaAddress($);
   if (schemaAddress) {
     return { ...schemaAddress, source: pageUrl };
   }
-  
+
   // Look for address in common locations
   const addressCandidates: { text: string; score: number }[] = [];
-  
+
   // Check footer sections - often contains HQ address
   $("footer, .footer, #footer, [class*='footer']").each((_, element) => {
     const text = $(element).text().trim();
@@ -285,7 +285,7 @@ function extractAddress(html: string, pageUrl: string): ScrapedAddress | null {
       addressCandidates.push({ text, score: score + 10 }); // Bonus for being in footer
     }
   });
-  
+
   // Check address-related elements
   $("address, [itemprop='address'], .address, #address, [class*='address']").each((_, element) => {
     const text = $(element).text().trim();
@@ -294,7 +294,7 @@ function extractAddress(html: string, pageUrl: string): ScrapedAddress | null {
       addressCandidates.push({ text, score: score + 15 }); // Bonus for being in address element
     }
   });
-  
+
   // Check contact sections
   $("[class*='contact'], #contact, .contact-info, [class*='location']").each((_, element) => {
     const text = $(element).text().trim();
@@ -303,7 +303,7 @@ function extractAddress(html: string, pageUrl: string): ScrapedAddress | null {
       addressCandidates.push({ text, score: score + 5 });
     }
   });
-  
+
   // Check elements near address indicators
   ADDRESS_INDICATORS.forEach((indicator) => {
     $(`*:contains("${indicator}")`).each((_, element) => {
@@ -315,10 +315,10 @@ function extractAddress(html: string, pageUrl: string): ScrapedAddress | null {
       }
     });
   });
-  
+
   // Sort by score and get the best candidate
   addressCandidates.sort((a, b) => b.score - a.score);
-  
+
   if (addressCandidates.length > 0) {
     const bestCandidate = addressCandidates[0];
     const parsed = parseAddressText(bestCandidate.text);
@@ -326,19 +326,19 @@ function extractAddress(html: string, pageUrl: string): ScrapedAddress | null {
       return { ...parsed, source: pageUrl };
     }
   }
-  
+
   return null;
 }
 
 // Extract address from Schema.org structured data
-function extractSchemaAddress($: cheerio.CheerioAPI): Partial<ScrapedAddress> | null {
+function extractSchemaAddress($: cheerio.Root): Partial<ScrapedAddress> | null {
   // Check for JSON-LD
   const jsonLdScripts = $('script[type="application/ld+json"]');
   for (let i = 0; i < jsonLdScripts.length; i++) {
     try {
       const content = $(jsonLdScripts[i]).html();
       if (!content) continue;
-      
+
       const data = JSON.parse(content);
       const address = findAddressInSchema(data);
       if (address) return address;
@@ -346,14 +346,14 @@ function extractSchemaAddress($: cheerio.CheerioAPI): Partial<ScrapedAddress> | 
       // Invalid JSON, skip
     }
   }
-  
+
   // Check for microdata
   const streetAddress = $('[itemprop="streetAddress"]').first().text().trim();
   const addressLocality = $('[itemprop="addressLocality"]').first().text().trim();
   const addressRegion = $('[itemprop="addressRegion"]').first().text().trim();
   const postalCode = $('[itemprop="postalCode"]').first().text().trim();
   const addressCountry = $('[itemprop="addressCountry"]').first().text().trim();
-  
+
   if (streetAddress || addressLocality) {
     return {
       addressLine1: streetAddress || undefined,
@@ -366,14 +366,14 @@ function extractSchemaAddress($: cheerio.CheerioAPI): Partial<ScrapedAddress> | 
         .join(", "),
     };
   }
-  
+
   return null;
 }
 
 // Recursively find address in Schema.org data
 function findAddressInSchema(data: any): Partial<ScrapedAddress> | null {
   if (!data || typeof data !== "object") return null;
-  
+
   // Check if this is an address object
   if (data["@type"] === "PostalAddress" || data.streetAddress) {
     return {
@@ -381,8 +381,8 @@ function findAddressInSchema(data: any): Partial<ScrapedAddress> | null {
       city: data.addressLocality || undefined,
       region: data.addressRegion || undefined,
       postalCode: data.postalCode || undefined,
-      country: typeof data.addressCountry === "string" 
-        ? data.addressCountry 
+      country: typeof data.addressCountry === "string"
+        ? data.addressCountry
         : data.addressCountry?.name || undefined,
       fullAddress: [
         data.streetAddress,
@@ -393,19 +393,19 @@ function findAddressInSchema(data: any): Partial<ScrapedAddress> | null {
       ].filter(Boolean).join(", "),
     };
   }
-  
+
   // Check address property
   if (data.address) {
     const result = findAddressInSchema(data.address);
     if (result) return result;
   }
-  
+
   // Check location property
   if (data.location) {
     const result = findAddressInSchema(data.location);
     if (result) return result;
   }
-  
+
   // Check arrays
   if (Array.isArray(data)) {
     for (const item of data) {
@@ -413,7 +413,7 @@ function findAddressInSchema(data: any): Partial<ScrapedAddress> | null {
       if (result) return result;
     }
   }
-  
+
   // Check nested objects
   for (const key of Object.keys(data)) {
     if (typeof data[key] === "object") {
@@ -421,35 +421,35 @@ function findAddressInSchema(data: any): Partial<ScrapedAddress> | null {
       if (result) return result;
     }
   }
-  
+
   return null;
 }
 
 // Score how likely a text contains an address
 function scoreAddressText(text: string): number {
   if (!text || text.length < 10 || text.length > 1000) return 0;
-  
+
   const lowerText = text.toLowerCase();
   let score = 0;
-  
+
   // Check for postal code patterns (US, UK, etc.)
   if (/\b\d{5}(-\d{4})?\b/.test(text)) score += 20; // US ZIP
   if (/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i.test(text)) score += 20; // UK postcode
   if (/\b[A-Z]\d[A-Z]\s*\d[A-Z]\d\b/i.test(text)) score += 20; // Canadian postcode
-  
+
   // Check for street indicators
   if (/\b(street|st\.|avenue|ave\.|road|rd\.|boulevard|blvd\.|drive|dr\.|lane|ln\.|way|court|ct\.|place|pl\.|suite|ste\.|floor|flr\.)\b/i.test(text)) {
     score += 15;
   }
-  
+
   // Check for number + street pattern
   if (/\b\d+\s+[A-Za-z]+\s+(street|st|avenue|ave|road|rd|boulevard|blvd|drive|dr|way)/i.test(text)) {
     score += 20;
   }
-  
+
   // Check for city/state patterns
   if (/,\s*[A-Z]{2}\s+\d{5}/i.test(text)) score += 15; // City, ST 12345
-  
+
   // Check for country names
   for (const country of COUNTRY_PATTERNS) {
     if (lowerText.includes(country)) {
@@ -457,7 +457,7 @@ function scoreAddressText(text: string): number {
       break;
     }
   }
-  
+
   // Check for address indicators nearby
   for (const indicator of ADDRESS_INDICATORS) {
     if (lowerText.includes(indicator)) {
@@ -465,7 +465,7 @@ function scoreAddressText(text: string): number {
       break;
     }
   }
-  
+
   return score;
 }
 
@@ -487,7 +487,7 @@ const US_STATES: Record<string, string> = {
 // Clean raw text to extract just the address portion
 function cleanAddressText(text: string): string {
   let cleaned = text;
-  
+
   // Remove common noise phrases (case insensitive)
   const noisePatterns = [
     /\b(headquarters|head\s*quarters|hq|corporate\s*office|main\s*office|office\s*address)\b:?\s*/gi,
@@ -499,35 +499,35 @@ function cleanAddressText(text: string): string {
     /\b(copyright|©|all\s*rights\s*reserved)\b.*/gi,
     /\b(privacy\s*policy|terms\s*(of\s*service|&\s*conditions)?)\b/gi,
   ];
-  
+
   for (const pattern of noisePatterns) {
     cleaned = cleaned.replace(pattern, ' ');
   }
-  
+
   // Remove email addresses
   cleaned = cleaned.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, ' ');
-  
+
   // Remove phone numbers (various formats)
   cleaned = cleaned.replace(/\+?1?[\s.-]?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g, ' ');
   cleaned = cleaned.replace(/\(\d{3}\)\s*\d{3}[\s.-]?\d{4}/g, ' ');
-  
+
   // Remove URLs
   cleaned = cleaned.replace(/https?:\/\/[^\s]+/gi, ' ');
   cleaned = cleaned.replace(/www\.[^\s]+/gi, ' ');
-  
+
   // Replace pipe characters and multiple separators with commas
   cleaned = cleaned.replace(/\s*\|\s*/g, ', ');
   cleaned = cleaned.replace(/\s*[•·]\s*/g, ', ');
-  
+
   // Normalize whitespace and newlines
   cleaned = cleaned.replace(/[\n\r\t]+/g, ', ');
   cleaned = cleaned.replace(/\s+/g, ' ');
   cleaned = cleaned.replace(/,\s*,/g, ',');
   cleaned = cleaned.trim();
-  
+
   // Remove leading/trailing commas
   cleaned = cleaned.replace(/^[,\s]+|[,\s]+$/g, '');
-  
+
   return cleaned;
 }
 
@@ -535,22 +535,22 @@ function cleanAddressText(text: string): string {
 function extractAddressFromText(text: string): string | null {
   // Pattern: number + street + optional suite + city + state + zip
   // Example: "309 Commerce Dr, Suite 100, Exton, PA 19341"
-  
+
   // Try to find a US address pattern
   const usAddressPattern = /(\d+\s+[A-Za-z0-9\s]+(?:street|st|avenue|ave|road|rd|boulevard|blvd|drive|dr|lane|ln|way|court|ct|place|pl|circle|cir|highway|hwy|parkway|pkwy)[.,]?\s*(?:suite|ste|unit|apt|#)?\s*\d*[.,]?\s*[A-Za-z\s]+[.,]?\s*[A-Z]{2}\s+\d{5}(?:-\d{4})?)/i;
-  
+
   const match = text.match(usAddressPattern);
   if (match) {
     return match[1].trim();
   }
-  
+
   // Fallback: try to find any text with street number, city, state abbrev, and zip
   const fallbackPattern = /(\d+[^,\n]*,\s*[^,\n]+,\s*[A-Z]{2}\s+\d{5}(?:-\d{4})?)/i;
   const fallbackMatch = text.match(fallbackPattern);
   if (fallbackMatch) {
     return fallbackMatch[1].trim();
   }
-  
+
   return null;
 }
 
@@ -558,20 +558,20 @@ function extractAddressFromText(text: string): string | null {
 function parseAddressText(text: string): Partial<ScrapedAddress> | null {
   // First, clean the text to remove noise
   const cleanedText = cleanAddressText(text);
-  
+
   if (!cleanedText || cleanedText.length < 10) return null;
-  
+
   // Try to extract a clean address string first
   const extractedAddress = extractAddressFromText(cleanedText);
   const addressToParse = extractedAddress || cleanedText;
-  
+
   // Use the parse-address library to parse US addresses
   try {
     const parsed = parser.parseLocation(addressToParse);
-    
+
     if (parsed) {
       const result: Partial<ScrapedAddress> = {};
-      
+
       // Build street address from components
       const streetParts: string[] = [];
       if (parsed.number) streetParts.push(parsed.number);
@@ -579,17 +579,17 @@ function parseAddressText(text: string): Partial<ScrapedAddress> | null {
       if (parsed.street) streetParts.push(parsed.street);
       if (parsed.type) streetParts.push(parsed.type);
       if (parsed.suffix) streetParts.push(parsed.suffix);
-      
+
       if (streetParts.length > 0) {
         result.addressLine1 = streetParts.join(' ');
       }
-      
+
       // Handle secondary address (Suite, Unit, etc.)
       if (parsed.sec_unit_type || parsed.sec_unit_num) {
         const secParts: string[] = [];
         if (parsed.sec_unit_type) secParts.push(parsed.sec_unit_type);
         if (parsed.sec_unit_num) secParts.push(parsed.sec_unit_num);
-        
+
         if (secParts.length > 0) {
           // Append to addressLine1 or create addressLine2
           if (result.addressLine1) {
@@ -599,22 +599,22 @@ function parseAddressText(text: string): Partial<ScrapedAddress> | null {
           }
         }
       }
-      
+
       // City
       if (parsed.city) {
         result.city = parsed.city;
       }
-      
+
       // State/Region
       if (parsed.state) {
         result.region = parsed.state.toUpperCase();
       }
-      
+
       // Postal code
       if (parsed.zip) {
         result.postalCode = parsed.zip;
       }
-      
+
       // Build full address string
       const fullParts: string[] = [];
       if (result.addressLine1) fullParts.push(result.addressLine1);
@@ -626,16 +626,16 @@ function parseAddressText(text: string): Partial<ScrapedAddress> | null {
         if (result.region) fullParts.push(result.region);
         if (result.postalCode) fullParts.push(result.postalCode);
       }
-      
+
       if (fullParts.length > 0) {
         result.fullAddress = fullParts.join(', ');
       }
-      
+
       // Detect country (US addresses parsed by this library)
       if (result.region && US_STATES[result.region]) {
         result.country = 'US';
       }
-      
+
       // Only return if we have meaningful data
       if (result.addressLine1 || result.city || result.postalCode) {
         return result;
@@ -644,7 +644,7 @@ function parseAddressText(text: string): Partial<ScrapedAddress> | null {
   } catch (e) {
     console.error("Address parsing error:", e);
   }
-  
+
   // Fallback to manual parsing if library fails
   return parseAddressManual(cleanedText);
 }
@@ -652,30 +652,30 @@ function parseAddressText(text: string): Partial<ScrapedAddress> | null {
 // Manual fallback parsing for addresses the library can't handle
 function parseAddressManual(text: string): Partial<ScrapedAddress> | null {
   const result: Partial<ScrapedAddress> = {};
-  
+
   // Try to find components manually
-  
+
   // US ZIP code
   const zipMatch = text.match(/\b(\d{5}(?:-\d{4})?)\b/);
   if (zipMatch) {
     result.postalCode = zipMatch[1];
     result.country = 'US';
   }
-  
+
   // UK postcode
   const ukPostMatch = text.match(/\b([A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2})\b/i);
   if (ukPostMatch && !result.postalCode) {
     result.postalCode = ukPostMatch[1].toUpperCase();
     result.country = 'UK';
   }
-  
+
   // Canadian postcode
   const caPostMatch = text.match(/\b([A-Z]\d[A-Z]\s*\d[A-Z]\d)\b/i);
   if (caPostMatch && !result.postalCode) {
     result.postalCode = caPostMatch[1].toUpperCase();
     result.country = 'Canada';
   }
-  
+
   // US state pattern: City, ST (two letter state abbreviation)
   const cityStatePattern = /([A-Za-z\s]+)[,\s]+([A-Z]{2})\s+\d{5}/i;
   const cityStateMatch = text.match(cityStatePattern);
@@ -683,13 +683,13 @@ function parseAddressManual(text: string): Partial<ScrapedAddress> | null {
     result.city = cityStateMatch[1].trim();
     result.region = cityStateMatch[2].toUpperCase();
   }
-  
+
   // Street address: starts with number
   const streetMatch = text.match(/^(\d+\s+[^,]+)/);
   if (streetMatch) {
     result.addressLine1 = streetMatch[1].trim();
   }
-  
+
   if (result.postalCode || result.city || result.addressLine1) {
     // Build full address
     const parts: string[] = [];
@@ -702,16 +702,16 @@ function parseAddressManual(text: string): Partial<ScrapedAddress> | null {
       if (result.postalCode) parts.push(result.postalCode);
     }
     if (result.country && result.country !== 'US') parts.push(result.country);
-    
+
     result.fullAddress = parts.join(', ');
     return result;
   }
-  
+
   // If we have some text but couldn't parse it, return it as fullAddress
   if (text.length > 20 && text.length < 300) {
     return { fullAddress: text };
   }
-  
+
   return null;
 }
 
@@ -719,8 +719,8 @@ function extractContactsFromHtml(
   html: string,
   pageUrl: string,
   domain: string
-): { 
-  emails: ScrapedContact[]; 
+): {
+  emails: ScrapedContact[];
   phones: ScrapedContact[];
   linkedinUrl: string | null;
   address: ScrapedAddress | null;
@@ -733,7 +733,7 @@ function extractContactsFromHtml(
 
   // Extract LinkedIn URL before removing scripts (might be in JSON-LD)
   const linkedinUrl = extractLinkedinUrl(html, pageUrl);
-  
+
   // Extract address before removing elements
   const address = extractAddress(html, pageUrl);
 
@@ -891,12 +891,12 @@ export async function POST(
             allPhones.set(phone.value, phone);
           }
         }
-        
+
         // Store LinkedIn URL (first one found wins)
         if (!foundLinkedinUrl && linkedinUrl) {
           foundLinkedinUrl = linkedinUrl;
         }
-        
+
         // Store address (prefer more complete addresses)
         if (address) {
           if (!foundAddress) {
