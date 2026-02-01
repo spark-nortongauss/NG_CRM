@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, Plus, ChevronLeft, ChevronRight, Search, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import {
   ColumnCustomizer,
@@ -118,6 +118,65 @@ export default function ContactsPage() {
   const [totalPages, setTotalPages] = useState(0);
 
   const router = useRouter();
+
+  // Search and sort state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState<"name" | "email">("name");
+  const [sortOption, setSortOption] = useState<"" | "name" | "contacts">("");
+
+  // Compute filtered and sorted data
+  const getFilteredAndSortedData = () => {
+    let data = [...contacts];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      if (searchType === "name") {
+        data = data.filter(
+          (contact) =>
+            contact.first_name?.toLowerCase().includes(query) ||
+            contact.last_name?.toLowerCase().includes(query)
+        );
+      } else {
+        data = data.filter(
+          (contact) =>
+            contact.email_1?.toLowerCase().includes(query) ||
+            contact.email_2?.toLowerCase().includes(query) ||
+            contact.email_3?.toLowerCase().includes(query)
+        );
+      }
+    }
+
+    // Apply sorting
+    if (sortOption === "name") {
+      data.sort((a, b) => {
+        const aName = `${a.first_name || ""} ${a.last_name || ""}`.trim();
+        const bName = `${b.first_name || ""} ${b.last_name || ""}`.trim();
+        return aName.localeCompare(bName);
+      });
+    } else if (sortOption === "contacts") {
+      // Priority: has both email AND phone > has either > has neither
+      data.sort((a, b) => {
+        const hasEmail = (c: Contact) =>
+          !!(c.email_1 || c.email_2 || c.email_3);
+        const hasPhone = (c: Contact) =>
+          !!(c.mobile_1 || c.mobile_2 || c.mobile_3 || c.fixed_number);
+
+        const aHasEmail = hasEmail(a);
+        const aHasPhone = hasPhone(a);
+        const bHasEmail = hasEmail(b);
+        const bHasPhone = hasPhone(b);
+
+        const aScore = (aHasEmail ? 1 : 0) + (aHasPhone ? 1 : 0);
+        const bScore = (bHasEmail ? 1 : 0) + (bHasPhone ? 1 : 0);
+        return bScore - aScore;
+      });
+    }
+
+    return data;
+  };
+
+  const displayedContacts = getFilteredAndSortedData();
 
   useEffect(() => {
     fetchContacts();
@@ -282,15 +341,14 @@ export default function ContactsPage() {
       case "contact_status":
         return contact.contact_status ? (
           <span
-            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-              contact.contact_status === "Call"
-                ? "bg-green-100 text-green-700"
-                : contact.contact_status === "Email"
-                  ? "bg-blue-100 text-blue-700"
-                  : contact.contact_status === "LinkedIn"
-                    ? "bg-indigo-100 text-indigo-700"
-                    : "bg-red-100 text-red-700"
-            }`}
+            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${contact.contact_status === "Call"
+              ? "bg-green-100 text-green-700"
+              : contact.contact_status === "Email"
+                ? "bg-blue-100 text-blue-700"
+                : contact.contact_status === "LinkedIn"
+                  ? "bg-indigo-100 text-indigo-700"
+                  : "bg-red-100 text-red-700"
+              }`}
           >
             {contact.contact_status}
           </span>
@@ -382,7 +440,7 @@ export default function ContactsPage() {
   }
 
   const visibleColumnConfigs = getVisibleColumnConfigs();
-  const totalColumnSpan = visibleColumnConfigs.length + 1; // +1 for actions column
+  const totalColumnSpan = visibleColumnConfigs.length + 2; // +1 for row number, +1 for actions column
 
   return (
     <div className="space-y-6 p-6">
@@ -449,12 +507,52 @@ export default function ContactsPage() {
         </span>
       </div>
 
+      {/* Search and Sort Controls */}
+      <div className="flex items-center gap-4 flex-wrap">
+        {/* Search Bar with Type Selector */}
+        <div className="flex items-center gap-2">
+          <select
+            value={searchType}
+            onChange={(e) => setSearchType(e.target.value as "name" | "email")}
+            className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="name">Name</option>
+            <option value="email">Email</option>
+          </select>
+          <div className="relative flex-1 min-w-[250px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={searchType === "name" ? "Search by name..." : "Search by email..."}
+              className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Sort Dropdown */}
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-gray-500" />
+          <select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value as "" | "name" | "contacts")}
+            className="h-10 rounded-lg border border-gray-300 bg-white px-3 pr-8 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="">No Sorting</option>
+            <option value="name">Sort by Name (A-Z)</option>
+            <option value="contacts">Sort by Contacts</option>
+          </select>
+        </div>
+      </div>
+
       <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
         {/* Table Container with Horizontal Scroll */}
         <div className="overflow-x-auto">
           <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[60px] text-center">#</TableHead>
                 {visibleColumnConfigs.map((column) => (
                   <TableHead key={column.key} style={{ width: column.width }}>
                     {column.label}
@@ -474,7 +572,7 @@ export default function ContactsPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : contacts.length === 0 ? (
+              ) : displayedContacts.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={totalColumnSpan}
@@ -484,12 +582,15 @@ export default function ContactsPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                contacts.map((contact) => (
+                displayedContacts.map((contact, index) => (
                   <TableRow
                     key={contact.id}
                     className="cursor-pointer hover:bg-gray-50 bg-white"
                     onClick={() => handleRowClick(contact.id)}
                   >
+                    <TableCell className="text-center text-gray-500 font-medium">
+                      {(page - 1) * limit + index + 1}
+                    </TableCell>
                     {visibleColumnConfigs.map((column) => (
                       <TableCell key={column.key}>
                         {renderCellValue(contact, column.key)}
@@ -597,11 +698,10 @@ export default function ContactsPage() {
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    className={`flex h-8 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors ${
-                      isCurrentPage
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-300 hover:bg-gray-50"
-                    }`}
+                    className={`flex h-8 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors ${isCurrentPage
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-300 hover:bg-gray-50"
+                      }`}
                   >
                     {isLastPage && totalPages > 7 ? "Last" : pageNum}
                   </button>

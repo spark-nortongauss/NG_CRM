@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, Plus, ChevronLeft, ChevronRight, Search, ArrowUpDown } from "lucide-react";
 import {
   ColumnCustomizer,
   ColumnConfig,
@@ -128,6 +128,43 @@ export default function OrganizationsPage() {
   const [totalPages, setTotalPages] = useState(0);
 
   const router = useRouter();
+
+  // Search and sort state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOption, setSortOption] = useState<"" | "name" | "contacts">("");
+
+  // Compute filtered and sorted data
+  const getFilteredAndSortedData = () => {
+    let data = [...organizations];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      data = data.filter((org) =>
+        org.legal_name?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply sorting
+    if (sortOption === "name") {
+      data.sort((a, b) =>
+        (a.legal_name || "").localeCompare(b.legal_name || "")
+      );
+    } else if (sortOption === "contacts") {
+      // Prioritize organizations with more contact data
+      data.sort((a, b) => {
+        const aScore =
+          (a.primary_email ? 1 : 0) + (a.primary_phone_e164 ? 1 : 0);
+        const bScore =
+          (b.primary_email ? 1 : 0) + (b.primary_phone_e164 ? 1 : 0);
+        return bScore - aScore;
+      });
+    }
+
+    return data;
+  };
+
+  const displayedOrganizations = getFilteredAndSortedData();
 
   useEffect(() => {
     fetchOrganizations();
@@ -404,7 +441,7 @@ export default function OrganizationsPage() {
   }
 
   const visibleColumnConfigs = getVisibleColumnConfigs();
-  const totalColumnSpan = visibleColumnConfigs.length + 1; // +1 for actions column
+  const totalColumnSpan = visibleColumnConfigs.length + 2; // +1 for row number, +1 for actions column
 
   return (
     <div className="space-y-6 p-6">
@@ -471,12 +508,42 @@ export default function OrganizationsPage() {
         </span>
       </div>
 
+      {/* Search and Sort Controls */}
+      <div className="flex items-center gap-4 flex-wrap">
+        {/* Search Bar */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by organization name..."
+            className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Sort Dropdown */}
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-gray-500" />
+          <select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value as "" | "name" | "contacts")}
+            className="h-10 rounded-lg border border-gray-300 bg-white px-3 pr-8 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="">No Sorting</option>
+            <option value="name">Sort by Name (A-Z)</option>
+            <option value="contacts">Sort by Contacts</option>
+          </select>
+        </div>
+      </div>
+
       <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
         {/* Table Container with Horizontal Scroll */}
         <div className="overflow-x-auto">
           <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[60px] text-center">#</TableHead>
                 {visibleColumnConfigs.map((column) => (
                   <TableHead
                     key={column.key}
@@ -499,7 +566,7 @@ export default function OrganizationsPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : organizations.length === 0 ? (
+              ) : displayedOrganizations.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={totalColumnSpan}
@@ -509,12 +576,15 @@ export default function OrganizationsPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                organizations.map((org) => (
+                displayedOrganizations.map((org, index) => (
                   <TableRow
                     key={org.org_id}
                     className="cursor-pointer hover:bg-gray-50 bg-white"
                     onClick={() => handleRowClick(org.org_id)}
                   >
+                    <TableCell className="text-center text-gray-500 font-medium">
+                      {(page - 1) * limit + index + 1}
+                    </TableCell>
                     {visibleColumnConfigs.map((column) => (
                       <TableCell key={column.key}>
                         {renderCellValue(org, column.key)}
@@ -622,11 +692,10 @@ export default function OrganizationsPage() {
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    className={`flex h-8 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors ${
-                      isCurrentPage
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-300 hover:bg-gray-50"
-                    }`}
+                    className={`flex h-8 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors ${isCurrentPage
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-300 hover:bg-gray-50"
+                      }`}
                   >
                     {isLastPage && totalPages > 7 ? "Last" : pageNum}
                   </button>
