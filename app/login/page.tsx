@@ -35,7 +35,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="relative flex min-h-screen items-center justify-center bg-ng-teal">
       {/* Background Logo with Blur */}
       <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
         <div className="relative h-full w-full">
@@ -43,14 +43,14 @@ export default function LoginPage() {
             src="/bg.jpg"
             alt="Norton-Gauss Background"
             fill
-            className="object-cover opacity-60"
+            className="object-cover opacity-30"
             priority
           />
         </div>
       </div>
 
       {/* Login Card */}
-      <Card className="relative z-10 w-full max-w-md shadow-2xl">
+      <Card className="relative z-10 w-full max-w-md shadow-2xl bg-white/95 backdrop-blur-sm border-0">
         <CardHeader className="space-y-1 text-center">
           <div className="mb-4 flex justify-center">
             <Image
@@ -62,15 +62,15 @@ export default function LoginPage() {
               priority
             />
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-ng-teal font-primary">Welcome Back</CardTitle>
+          <CardDescription className="text-ng-gray">
             Sign in to your Norton-Gauss CRM account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-ng-teal font-medium">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -79,10 +79,11 @@ export default function LoginPage() {
                 required
                 disabled={isLoading}
                 autoComplete="email"
+                className="border-ng-gray/30 focus:border-ng-teal focus:ring-ng-teal"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-ng-teal font-medium">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -92,7 +93,7 @@ export default function LoginPage() {
                   required
                   disabled={isLoading}
                   autoComplete="current-password"
-                  className="pr-10"
+                  className="pr-10 border-ng-gray/30 focus:border-ng-teal focus:ring-ng-teal"
                 />
                 <Button
                   type="button"
@@ -103,9 +104,9 @@ export default function LoginPage() {
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-500" />
+                    <EyeOff className="h-4 w-4 text-ng-gray" />
                   ) : (
-                    <Eye className="h-4 w-4 text-gray-500" />
+                    <Eye className="h-4 w-4 text-ng-gray" />
                   )}
                 </Button>
               </div>
@@ -117,7 +118,11 @@ export default function LoginPage() {
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full bg-ng-teal hover:bg-ng-teal/90 text-white font-medium transition-all duration-200 hover:shadow-lg"
+              disabled={isLoading}
+            >
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
@@ -126,3 +131,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

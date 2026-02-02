@@ -27,10 +27,13 @@ export function Sidebar() {
     const isActive = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
 
     return (
-        <div className="flex h-screen flex-col bg-white w-64 fixed left-0 top-0 z-50 overflow-y-auto">
-            {/* Logo Area - Optional but good for spacing */}
-            <div className="flex h-16 items-center border-b px-6">
-                <span className="text-xl font-bold tracking-tight text-blue-600">NG <span className="text-gray-900">CRM</span></span>
+        <div className="flex h-screen flex-col bg-ng-teal w-64 fixed left-0 top-0 z-50 overflow-y-auto">
+            {/* Logo Area */}
+            <div className="flex h-16 items-center border-b border-white/20 px-6">
+                <span className="text-xl font-bold tracking-tight font-primary">
+                    <span className="text-ng-yellow">NG</span>{" "}
+                    <span className="text-white">CRM</span>
+                </span>
             </div>
 
             <nav className="flex-1 space-y-1 p-4">
@@ -39,8 +42,8 @@ export function Sidebar() {
                     <button
                         onClick={() => toggleMenu("organizations")}
                         className={cn(
-                            "flex w-full items-center justify-between rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-gray-100",
-                            isActive("/organizations") ? "text-blue-600" : "text-gray-700"
+                            "flex w-full items-center justify-between rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-white/10",
+                            isActive("/organizations") ? "text-ng-yellow" : "text-white"
                         )}
                     >
                         <div className="flex items-center gap-3">
@@ -48,9 +51,9 @@ export function Sidebar() {
                             <span>Organizations</span>
                         </div>
                         {openMenus.organizations ? (
-                            <ChevronDown className="h-4 w-4 text-gray-400" />
+                            <ChevronDown className="h-4 w-4 text-white/60" />
                         ) : (
-                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                            <ChevronRight className="h-4 w-4 text-white/60" />
                         )}
                     </button>
 
@@ -59,10 +62,10 @@ export function Sidebar() {
                             <Link
                                 href="/add-org-form"
                                 className={cn(
-                                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-gray-50 hover:text-blue-600",
+                                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-white/10 hover:text-ng-yellow",
                                     pathname === "/add-org-form"
-                                        ? "bg-blue-50 text-blue-600 font-medium"
-                                        : "text-gray-600"
+                                        ? "bg-white/10 text-ng-yellow font-medium"
+                                        : "text-white/80"
                                 )}
                             >
                                 <Plus className="h-4 w-4" />
@@ -71,8 +74,8 @@ export function Sidebar() {
                             <Link
                                 href="/organizations"
                                 className={cn(
-                                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-gray-50 hover:text-blue-600",
-                                    pathname === "/organizations" ? "bg-blue-50 text-blue-600 font-medium" : "text-gray-600"
+                                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-white/10 hover:text-ng-yellow",
+                                    pathname === "/organizations" ? "bg-white/10 text-ng-yellow font-medium" : "text-white/80"
                                 )}
                             >
                                 <List className="h-4 w-4" />
@@ -87,8 +90,8 @@ export function Sidebar() {
                     <button
                         onClick={() => toggleMenu("contacts")}
                         className={cn(
-                            "flex w-full items-center justify-between rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-gray-100",
-                            isActive("/contacts") ? "text-blue-600" : "text-gray-700"
+                            "flex w-full items-center justify-between rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-white/10",
+                            isActive("/contacts") ? "text-ng-yellow" : "text-white"
                         )}
                     >
                         <div className="flex items-center gap-3">
@@ -96,9 +99,9 @@ export function Sidebar() {
                             <span>Contacts</span>
                         </div>
                         {openMenus.contacts ? (
-                            <ChevronDown className="h-4 w-4 text-gray-400" />
+                            <ChevronDown className="h-4 w-4 text-white/60" />
                         ) : (
-                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                            <ChevronRight className="h-4 w-4 text-white/60" />
                         )}
                     </button>
 
@@ -106,14 +109,24 @@ export function Sidebar() {
                         <div className="ml-9 mt-1 space-y-1">
                             <Link
                                 href="/contacts/add"
-                                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                                className={cn(
+                                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-white/10 hover:text-ng-yellow",
+                                    pathname === "/contacts/add"
+                                        ? "bg-white/10 text-ng-yellow font-medium"
+                                        : "text-white/80"
+                                )}
                             >
                                 <Plus className="h-4 w-4" />
                                 Add Contact
                             </Link>
                             <Link
                                 href="/contacts"
-                                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                                className={cn(
+                                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-white/10 hover:text-ng-yellow",
+                                    pathname === "/contacts"
+                                        ? "bg-white/10 text-ng-yellow font-medium"
+                                        : "text-white/80"
+                                )}
                             >
                                 <List className="h-4 w-4" />
                                 Contacts List
@@ -127,8 +140,8 @@ export function Sidebar() {
                     <Link
                         href="#"
                         className={cn(
-                            "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-gray-100",
-                            isActive("/task-board") ? "bg-blue-50 text-blue-600" : "text-gray-700"
+                            "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-white/10",
+                            isActive("/task-board") ? "bg-white/10 text-ng-yellow" : "text-white"
                         )}
                     >
                         <ClipboardList className="h-5 w-5" />
@@ -138,10 +151,10 @@ export function Sidebar() {
             </nav>
 
             {/* Logout Section */}
-            <div className="border-t p-4">
+            <div className="border-t border-white/20 p-4">
                 <button
                     onClick={() => signOut()}
-                    className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-red-600"
+                    className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:text-red-400"
                 >
                     <LogOut className="h-5 w-5" />
                     <span>Logout</span>
@@ -150,3 +163,4 @@ export function Sidebar() {
         </div>
     );
 }
+

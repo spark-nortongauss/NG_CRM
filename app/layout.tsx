@@ -5,6 +5,7 @@ import "dropzone/dist/dropzone.css";
 import { LayoutShell } from "@/components/layout-shell";
 import { Header } from "@/components/header";
 import { AppStoreProvider } from "@/providers/app-store-provider";
+import { IdleLogoutProvider } from "@/providers/IdleLogoutProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,9 +33,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AppStoreProvider>
-          <LayoutShell header={<Header />}>
-            {children}
-          </LayoutShell>
+          <IdleLogoutProvider>
+            <LayoutShell header={<Header />}>
+              {children}
+            </LayoutShell>
+          </IdleLogoutProvider>
         </AppStoreProvider>
       </body>
     </html>
