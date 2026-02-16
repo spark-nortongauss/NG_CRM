@@ -17,6 +17,7 @@ import {
   ColumnConfig,
   useColumnVisibility,
 } from "@/components/ui/column-customizer";
+import { useUserRole } from "@/lib/hooks/use-user-role";
 
 interface Organization {
   org_id: string;
@@ -107,6 +108,9 @@ export default function OrganizationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Role-based access
+  const { isSuperAdmin } = useUserRole();
 
   // Column visibility state
   const [visibleColumns, setVisibleColumns] = useColumnVisibility(
@@ -441,7 +445,7 @@ export default function OrganizationsPage() {
   }
 
   const visibleColumnConfigs = getVisibleColumnConfigs();
-  const totalColumnSpan = visibleColumnConfigs.length + 2; // +1 for row number, +1 for actions column
+  const totalColumnSpan = visibleColumnConfigs.length + (isSuperAdmin ? 2 : 1); // +1 for row number, +1 for actions column (super_admin only)
 
   return (
     <div className="space-y-6 p-6">
@@ -468,39 +472,41 @@ export default function OrganizationsPage() {
           storageKey={STORAGE_KEY}
         />
 
-        {/* Bulk Delete Controls */}
-        <div className="flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm">
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor="bulkDeleteRange"
-              className="text-sm font-medium text-gray-700"
-            >
-              Delete Rows:
-            </label>
-            <input
-              id="bulkDeleteRange"
-              type="text"
-              value={bulkDeleteRange}
-              onChange={(e) => {
-                setBulkDeleteRange(e.target.value);
-                setBulkDeleteError(null);
-              }}
-              placeholder="e.g., 18-37"
-              className="h-9 w-32 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-            />
-            <button
-              onClick={handleBulkDeleteClick}
-              className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
-              disabled={!bulkDeleteRange.trim()}
-            >
-              <Trash2 className="h-4 w-4" />
-              Bulk Delete
-            </button>
+        {/* Bulk Delete Controls - Super Admin only */}
+        {isSuperAdmin && (
+          <div className="flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="bulkDeleteRange"
+                className="text-sm font-medium text-gray-700"
+              >
+                Delete Rows:
+              </label>
+              <input
+                id="bulkDeleteRange"
+                type="text"
+                value={bulkDeleteRange}
+                onChange={(e) => {
+                  setBulkDeleteRange(e.target.value);
+                  setBulkDeleteError(null);
+                }}
+                placeholder="e.g., 18-37"
+                className="h-9 w-32 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+              />
+              <button
+                onClick={handleBulkDeleteClick}
+                className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                disabled={!bulkDeleteRange.trim()}
+              >
+                <Trash2 className="h-4 w-4" />
+                Bulk Delete
+              </button>
+            </div>
+            {bulkDeleteError && (
+              <span className="text-sm text-red-600">{bulkDeleteError}</span>
+            )}
           </div>
-          {bulkDeleteError && (
-            <span className="text-sm text-red-600">{bulkDeleteError}</span>
-          )}
-        </div>
+        )}
 
         <span className="ml-auto text-xs text-gray-500">
           Current page rows: {(page - 1) * limit + 1} -{" "}
@@ -552,9 +558,11 @@ export default function OrganizationsPage() {
                     {column.label}
                   </TableHead>
                 ))}
-                <TableHead className="w-[80px] text-center sticky right-0 bg-white shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]">
-                  Actions
-                </TableHead>
+                {isSuperAdmin && (
+                  <TableHead className="w-[80px] text-center sticky right-0 bg-white shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]">
+                    Actions
+                  </TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -590,18 +598,20 @@ export default function OrganizationsPage() {
                         {renderCellValue(org, column.key)}
                       </TableCell>
                     ))}
-                    <TableCell
-                      className="text-center sticky right-0 bg-white shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        onClick={() => setDeleteId(org.org_id)}
-                        className="rounded-full p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                        title="Delete Organization"
+                    {isSuperAdmin && (
+                      <TableCell
+                        className="text-center sticky right-0 bg-white shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </TableCell>
+                        <button
+                          onClick={() => setDeleteId(org.org_id)}
+                          className="rounded-full p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                          title="Delete Organization"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}

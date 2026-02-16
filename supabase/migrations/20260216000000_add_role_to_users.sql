@@ -11,6 +11,21 @@ ALTER TABLE public.users
 -- Update existing users to default role
 UPDATE public.users SET role = 'user' WHERE role IS NULL;
 
+-- Create a SECURITY DEFINER function to get current user's role
+-- This reads from auth.users metadata to avoid infinite recursion with RLS on public.users
+CREATE OR REPLACE FUNCTION public.get_user_role()
+RETURNS TEXT
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT COALESCE(
+    (SELECT raw_user_meta_data->>'role' FROM auth.users WHERE id = auth.uid()),
+    'user'
+  );
+$$;
+
 -- Update the trigger function to also sync role from auth user metadata
 CREATE OR REPLACE FUNCTION public.handle_auth_user()
 RETURNS TRIGGER 
@@ -37,22 +52,14 @@ BEGIN
 END;
 $$;
 
--- Allow super_admins to view all users
+-- Allow super_admins to view all users (uses helper function, no recursion)
 CREATE POLICY "Super admins can view all users"
   ON public.users
   FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.role = 'super_admin'
-    )
-  );
+  USING (public.get_user_role() = 'super_admin');
 
--- Allow super_admins to update all users
+-- Allow super_admins to update all users (uses helper function, no recursion)
 CREATE POLICY "Super admins can update all users"
   ON public.users
   FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.role = 'super_admin'
-    )
-  );
+  USING (public.get_user_role() = 'super_admin');

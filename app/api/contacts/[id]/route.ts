@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireSuperAdmin } from "@/lib/auth/role-check";
 
 export async function GET(
   request: NextRequest,
@@ -38,6 +39,10 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  // Only super admins can edit contacts
+  const auth = await requireSuperAdmin();
+  if (!auth.authorized) return auth.response;
+
   const { id } = await params;
   const supabase = await createClient();
   const body = await request.json();
@@ -70,6 +75,10 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  // Only super admins can delete contacts
+  const auth = await requireSuperAdmin();
+  if (!auth.authorized) return auth.response;
+
   const { id } = await params;
   const supabase = await createClient();
 

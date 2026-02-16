@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireSuperAdmin } from "@/lib/auth/role-check";
 
 export async function GET(
     request: NextRequest,
@@ -38,19 +39,20 @@ export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    // Only super admins can edit organizations
+    const auth = await requireSuperAdmin();
+    if (!auth.authorized) return auth.response;
+
     const { id } = await params;
     const supabase = await createClient();
     const body = await request.json();
 
     try {
-        const { data: authData } = await supabase.auth.getUser();
-        const userId = authData?.user?.id ?? null;
-
         const { data, error } = await supabase
             .from("organizations")
             .update({
                 ...body,
-                updated_by_user_id: userId,
+                updated_by_user_id: auth.userId,
                 updated_at: new Date().toISOString(),
             })
             .eq("org_id", id)
@@ -74,6 +76,10 @@ export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    // Only super admins can delete organizations
+    const auth = await requireSuperAdmin();
+    if (!auth.authorized) return auth.response;
+
     const { id } = await params;
     const supabase = await createClient();
 

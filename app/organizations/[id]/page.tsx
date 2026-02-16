@@ -7,6 +7,7 @@ import { ArrowLeft, Check, Loader2, Users, Globe, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { WebsiteScanModal } from "@/components/WebsiteScanModal";
 import { ApolloSearchModal } from "@/components/ApolloSearchModal";
+import { useUserRole } from "@/lib/hooks/use-user-role";
 
 interface OrganizationContact {
   id: string;
@@ -76,6 +77,9 @@ export default function OrganizationDetailPage({
   const [savingField, setSavingField] = useState<string | null>(null);
   const [showWebsiteScanModal, setShowWebsiteScanModal] = useState(false);
   const [showApolloSearchModal, setShowApolloSearchModal] = useState(false);
+
+  // Role-based access
+  const { isSuperAdmin } = useUserRole();
 
   useEffect(() => {
     fetchOrganization();
@@ -160,10 +164,24 @@ export default function OrganizationDetailPage({
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
-        e.currentTarget.blur(); // Trigger blur to save
+        e.currentTarget.blur();
         handleUpdate(field, localValue);
       }
     };
+
+    // Read-only view for regular users
+    if (!isSuperAdmin) {
+      return (
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {label}
+          </label>
+          <div className="min-h-[38px] rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+            {organization?.[field]?.toString() || <span className="text-gray-400">-</span>}
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-1">
@@ -181,9 +199,7 @@ export default function OrganizationDetailPage({
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
             {savingField === field ? (
               <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-            ) : // Show checkmark briefly if just saved? (Complexity for later)
-            // For now standard input is fine
-            null}
+            ) : null}
           </div>
         </div>
       </div>
@@ -226,6 +242,40 @@ export default function OrganizationDetailPage({
         setIsEditing(false);
       }
     };
+
+    // Read-only view for regular users
+    if (!isSuperAdmin) {
+      return (
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {label}
+          </label>
+          <div className="min-h-[38px] rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
+            {values.length > 0 ? (
+              <div className="space-y-1">
+                {values.map((value: string, index: number) => (
+                  <div key={index} className="text-sm">
+                    {type === "email" ? (
+                      <a href={`mailto:${value}`} className="text-blue-600 hover:underline">
+                        {value}
+                      </a>
+                    ) : type === "tel" ? (
+                      <a href={`tel:${value}`} className="text-blue-600 hover:underline">
+                        {value}
+                      </a>
+                    ) : (
+                      <span className="text-gray-900">{value}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="text-gray-400">-</span>
+            )}
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-1">
