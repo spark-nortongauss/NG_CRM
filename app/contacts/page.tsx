@@ -346,12 +346,12 @@ export default function ContactsPage() {
         return contact.contact_status ? (
           <span
             className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${contact.contact_status === "Call"
-              ? "bg-green-100 text-green-700"
+              ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
               : contact.contact_status === "Email"
-                ? "bg-blue-100 text-blue-700"
+                ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
                 : contact.contact_status === "LinkedIn"
-                  ? "bg-indigo-100 text-indigo-700"
-                  : "bg-red-100 text-red-700"
+                  ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300"
+                  : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
               }`}
           >
             {contact.contact_status}
@@ -367,11 +367,11 @@ export default function ContactsPage() {
 
       case "contacted":
         return contact.contacted ? (
-          <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+          <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
             Yes
           </span>
         ) : (
-          <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+          <span className="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/30 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-300">
             No
           </span>
         );
@@ -381,11 +381,11 @@ export default function ContactsPage() {
       case "cold_email_status":
         const statusValue = contact[columnKey] || "Not Done";
         return statusValue === "Done" ? (
-          <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+          <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
             Done
           </span>
         ) : (
-          <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+          <span className="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/30 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-300">
             Not Done
           </span>
         );
@@ -401,7 +401,7 @@ export default function ContactsPage() {
         return contact[columnKey] ? (
           <a
             href={`mailto:${contact[columnKey]}`}
-            className="text-blue-600 hover:text-blue-800 hover:underline"
+            className="text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             {contact[columnKey]}
@@ -416,7 +416,7 @@ export default function ContactsPage() {
             href={contact.linkedin_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 hover:underline"
+            className="text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             {contact.linkedin_url.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, "").replace(/\/$/, "") || "View Profile"}
@@ -439,7 +439,7 @@ export default function ContactsPage() {
 
   if (error) {
     return (
-      <div className="rounded-md bg-red-50 p-4 text-red-600">Error: {error}</div>
+      <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-4 text-red-600 dark:text-red-300">Error: {error}</div>
     );
   }
 
@@ -450,7 +450,7 @@ export default function ContactsPage() {
     <div className="space-y-6 p-6">
       {/* Header with Title and Add Button */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Contacts</h1>
         <Link
           href="/contacts/add"
           className="flex items-center gap-2 rounded-md bg-ng-teal px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
@@ -473,11 +473,11 @@ export default function ContactsPage() {
 
         {/* Bulk Delete Controls - Super Admin only */}
         {isSuperAdmin && (
-          <div className="flex items-center gap-3 rounded-lg border bg-white p-3 shadow-sm">
+          <div className="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-3 shadow-sm">
             <div className="flex items-center gap-2">
               <label
                 htmlFor="bulkDeleteRange"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Delete Rows:
               </label>
@@ -490,7 +490,7 @@ export default function ContactsPage() {
                   setBulkDeleteError(null);
                 }}
                 placeholder="e.g., 18-37"
-                className="h-9 w-32 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                className="h-9 w-32 rounded-md border border-gray-300 dark:border-ng-dark-elevated dark:bg-ng-dark-bg dark:text-gray-200 px-3 text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
               />
               <button
                 onClick={handleBulkDeleteClick}
@@ -502,12 +502,12 @@ export default function ContactsPage() {
               </button>
             </div>
             {bulkDeleteError && (
-              <span className="text-sm text-red-600">{bulkDeleteError}</span>
+              <span className="text-sm text-red-600 dark:text-red-300">{bulkDeleteError}</span>
             )}
           </div>
         )}
 
-        <span className="ml-auto text-xs text-gray-500">
+        <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
           Current page rows: {(page - 1) * limit + 1} -{" "}
           {Math.min(page * limit, totalCount)}
         </span>
@@ -520,30 +520,30 @@ export default function ContactsPage() {
           <select
             value={searchType}
             onChange={(e) => setSearchType(e.target.value as "name" | "email")}
-            className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="h-10 rounded-lg border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card px-3 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           >
             <option value="name">Name</option>
             <option value="email">Email</option>
           </select>
           <div className="relative flex-1 min-w-[250px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={searchType === "name" ? "Search by name..." : "Search by email..."}
-              className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="h-10 w-full rounded-lg border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card pl-10 pr-4 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </div>
         </div>
 
         {/* Sort Dropdown */}
         <div className="flex items-center gap-2">
-          <ArrowUpDown className="h-4 w-4 text-gray-500" />
+          <ArrowUpDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <select
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value as "" | "name" | "contacts")}
-            className="h-10 rounded-lg border border-gray-300 bg-white px-3 pr-8 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="h-10 rounded-lg border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card px-3 pr-8 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           >
             <option value="">No Sorting</option>
             <option value="name">Sort by Name (A-Z)</option>
@@ -552,7 +552,7 @@ export default function ContactsPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
+      <div className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card shadow-sm overflow-hidden">
         {/* Table Container with Horizontal Scroll */}
         <div className="overflow-x-auto">
           <Table className="min-w-[800px]">
@@ -565,7 +565,7 @@ export default function ContactsPage() {
                   </TableHead>
                 ))}
                 {isSuperAdmin && (
-                  <TableHead className="w-[80px] text-center sticky right-0 bg-white shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]">
+                  <TableHead className="w-[80px] text-center sticky right-0 bg-white dark:bg-ng-dark-card shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]">
                     Actions
                   </TableHead>
                 )}
@@ -584,7 +584,7 @@ export default function ContactsPage() {
                 <TableRow>
                   <TableCell
                     colSpan={totalColumnSpan}
-                    className="h-24 text-center text-gray-500"
+                    className="h-24 text-center text-gray-500 dark:text-gray-400"
                   >
                     No contacts found.
                   </TableCell>
@@ -593,10 +593,10 @@ export default function ContactsPage() {
                 displayedContacts.map((contact, index) => (
                   <TableRow
                     key={contact.id}
-                    className="cursor-pointer hover:bg-gray-50 bg-white"
+                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-ng-dark-hover bg-white dark:bg-ng-dark-card"
                     onClick={() => handleRowClick(contact.id)}
                   >
-                    <TableCell className="text-center text-gray-500 font-medium">
+                    <TableCell className="text-center text-gray-500 dark:text-gray-400 font-medium">
                       {(page - 1) * limit + index + 1}
                     </TableCell>
                     {visibleColumnConfigs.map((column) => (
@@ -606,12 +606,12 @@ export default function ContactsPage() {
                     ))}
                     {isSuperAdmin && (
                       <TableCell
-                        className="text-center sticky right-0 bg-white shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]"
+                        className="text-center sticky right-0 bg-white dark:bg-ng-dark-card shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
                           onClick={() => setDeleteId(contact.id)}
-                          className="rounded-full p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                          className="rounded-full p-2 text-gray-400 dark:text-gray-500 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 transition-colors"
                           title="Delete Contact"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -626,13 +626,13 @@ export default function ContactsPage() {
         </div>
 
         {/* Pagination Controls */}
-        <div className="flex items-center justify-between border-t px-4 py-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="flex items-center justify-between border-t border-gray-200 dark:border-ng-dark-elevated px-4 py-4">
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
             <span>Rows per page:</span>
             <select
               value={limit}
               onChange={handleLimitChange}
-              className="h-8 rounded-md border border-gray-300 bg-white px-2 py-1 outline-none focus:border-blue-500"
+              className="h-8 rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card px-2 py-1 text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500"
             >
               <option value="10">10</option>
               <option value="20">20</option>
@@ -650,7 +650,7 @@ export default function ContactsPage() {
             <button
               onClick={() => handlePageChange(page - 1)}
               disabled={page <= 1}
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 disabled:opacity-50 hover:bg-gray-50"
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 dark:border-ng-dark-elevated disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-ng-dark-hover text-gray-900 dark:text-gray-100"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -693,7 +693,7 @@ export default function ContactsPage() {
                   return (
                     <span
                       key={`ellipsis-${idx}`}
-                      className="flex h-8 w-8 items-center justify-center text-gray-500"
+                      className="flex h-8 w-8 items-center justify-center text-gray-500 dark:text-gray-400"
                     >
                       ...
                     </span>
@@ -710,7 +710,7 @@ export default function ContactsPage() {
                     onClick={() => handlePageChange(pageNum)}
                     className={`flex h-8 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors ${isCurrentPage
                       ? "border-blue-600 bg-blue-600 text-white"
-                      : "border-gray-300 hover:bg-gray-50"
+                      : "border-gray-300 dark:border-ng-dark-elevated hover:bg-gray-50 dark:hover:bg-ng-dark-hover text-gray-900 dark:text-gray-100"
                       }`}
                   >
                     {isLastPage && totalPages > 7 ? "Last" : pageNum}
@@ -723,7 +723,7 @@ export default function ContactsPage() {
             <button
               onClick={() => handlePageChange(page + 1)}
               disabled={page >= totalPages}
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 disabled:opacity-50 hover:bg-gray-50"
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 dark:border-ng-dark-elevated disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-ng-dark-hover text-gray-900 dark:text-gray-100"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -734,17 +734,17 @@ export default function ContactsPage() {
       {/* Delete Confirmation Modal */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-semibold text-gray-900">
+          <div className="w-full max-w-md rounded-lg bg-white dark:bg-ng-dark-card p-6 shadow-lg animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Delete Contact
             </h3>
-            <p className="mt-2 text-gray-500">
+            <p className="mt-2 text-gray-500 dark:text-gray-400">
               Are you sure you want to delete this contact?
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="rounded-md border border-gray-300 dark:border-ng-dark-elevated px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ng-dark-hover focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               >
                 No
               </button>
@@ -762,21 +762,21 @@ export default function ContactsPage() {
       {/* Bulk Delete Confirmation Modal */}
       {showBulkDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-semibold text-gray-900">
+          <div className="w-full max-w-md rounded-lg bg-white dark:bg-ng-dark-card p-6 shadow-lg animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Bulk Delete Contacts
             </h3>
-            <p className="mt-2 text-gray-500">
+            <p className="mt-2 text-gray-500 dark:text-gray-400">
               Are you sure you want to delete all these row datas?
             </p>
-            <p className="mt-2 text-sm font-medium text-red-600">
+            <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-300">
               {bulkDeleteIds.length} contact(s) will be permanently deleted.
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={cancelBulkDelete}
                 disabled={isBulkDeleting}
-                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
+                className="rounded-md border border-gray-300 dark:border-ng-dark-elevated px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ng-dark-hover focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
               >
                 No
               </button>

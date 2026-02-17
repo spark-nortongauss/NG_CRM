@@ -288,40 +288,40 @@ export function ApolloSearchModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-lg bg-white shadow-xl">
+      <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-lg bg-white dark:bg-ng-dark-card shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-ng-dark-elevated px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-              <Search className="h-5 w-5 text-purple-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+              <Search className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Apollo.io Contact Search
               </h2>
-              <p className="text-sm text-gray-500">{organizationName}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{organizationName}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 hover:bg-gray-100 transition-colors"
+            className="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-ng-dark-elevated transition-colors"
           >
-            <X className="h-5 w-5 text-gray-500" />
+            <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
         {/* Content */}
         <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-6">
           {/* Website/Domain Info */}
-          <div className="mb-6 rounded-lg bg-gray-50 p-4">
+          <div className="mb-6 rounded-lg bg-gray-50 dark:bg-ng-dark-bg p-4">
             <div>
-              <p className="text-sm font-medium text-gray-700">Search Domain</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Search Domain</p>
               {websiteUrl ? (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Searching for contacts at: <span className="font-medium">{domain || websiteUrl}</span>
                 </p>
               ) : (
-                <p className="text-sm text-amber-600">
+                <p className="text-sm text-amber-600 dark:text-amber-400">
                   No website URL configured - please add one first
                 </p>
               )}
@@ -333,17 +333,17 @@ export function ApolloSearchModal({
             <div className="text-center py-8">
               {!websiteUrl ? (
                 <div className="space-y-4">
-                  <AlertCircle className="h-12 w-12 mx-auto text-amber-500" />
-                  <p className="text-gray-600">
+                  <AlertCircle className="h-12 w-12 mx-auto text-amber-500 dark:text-amber-400" />
+                  <p className="text-gray-600 dark:text-gray-400">
                     Please add a website URL to this organization first.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-400">
                     Click the button below to search Apollo.io for contacts at this organization.
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Apollo.io provides professional contact data including emails, phone numbers, and LinkedIn profiles.
                   </p>
                   <button
@@ -361,9 +361,9 @@ export function ApolloSearchModal({
           {/* Loading State */}
           {isSearching && (
             <div className="text-center py-12">
-              <Loader2 className="h-12 w-12 mx-auto animate-spin text-purple-600" />
-              <p className="mt-4 text-gray-600">Searching Apollo.io...</p>
-              <p className="text-sm text-gray-500">
+              <Loader2 className="h-12 w-12 mx-auto animate-spin text-purple-600 dark:text-purple-400" />
+              <p className="mt-4 text-gray-600 dark:text-gray-400">Searching Apollo.io...</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 This may take a few seconds
               </p>
             </div>
@@ -371,15 +371,15 @@ export function ApolloSearchModal({
 
           {/* Error State */}
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-4 mb-6">
-              <div className="flex items-center gap-2 text-red-700">
+            <div className="rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 p-4 mb-6">
+              <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
                 <AlertCircle className="h-5 w-5" />
                 <p className="font-medium">Search Failed</p>
               </div>
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
               <button
                 onClick={handleSearch}
-                className="mt-3 text-sm text-red-700 hover:underline"
+                className="mt-3 text-sm text-red-700 dark:text-red-300 hover:underline"
               >
                 Try again
               </button>
@@ -392,23 +392,23 @@ export function ApolloSearchModal({
               {/* Summary */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="rounded-lg bg-purple-50 px-4 py-2 text-center">
-                    <p className="text-2xl font-bold text-purple-600">
+                  <div className="rounded-lg bg-purple-50 dark:bg-purple-900/30 px-4 py-2 text-center">
+                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                       {contacts.length}
                     </p>
-                    <p className="text-xs text-purple-600">Total Found</p>
+                    <p className="text-xs text-purple-600 dark:text-purple-400">Total Found</p>
                   </div>
-                  <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
-                    <p className="text-2xl font-bold text-green-600">
+                  <div className="rounded-lg bg-green-50 dark:bg-green-900/30 px-4 py-2 text-center">
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                       {newContactsCount}
                     </p>
-                    <p className="text-xs text-green-600">New Contacts</p>
+                    <p className="text-xs text-green-600 dark:text-green-400">New Contacts</p>
                   </div>
-                  <div className="rounded-lg bg-gray-100 px-4 py-2 text-center">
-                    <p className="text-2xl font-bold text-gray-600">
+                  <div className="rounded-lg bg-gray-100 dark:bg-ng-dark-hover px-4 py-2 text-center">
+                    <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
                       {existingContactsCount}
                     </p>
-                    <p className="text-xs text-gray-600">Already in CRM</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Already in CRM</p>
                   </div>
                 </div>
                 {newContactsCount > 0 && (
@@ -440,36 +440,36 @@ export function ApolloSearchModal({
                       key={contact.id}
                       className={`rounded-lg border p-4 transition-colors ${
                         isExisting || isSaved
-                          ? "bg-gray-50 border-gray-200"
-                          : "bg-white hover:bg-gray-50"
+                          ? "bg-gray-50 dark:bg-ng-dark-bg border-gray-200 dark:border-ng-dark-elevated"
+                          : "bg-white dark:bg-ng-dark-card hover:bg-gray-50 dark:hover:bg-ng-dark-hover border-gray-200 dark:border-ng-dark-elevated"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <User className="h-4 w-4 text-gray-400" />
-                            <h4 className="font-medium text-gray-900 truncate">
+                            <User className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                            <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate">
                               {fullName}
                             </h4>
                             {isExisting && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
                                 <Check className="h-3 w-3" /> In CRM
                               </span>
                             )}
                             {isSaved && !isExisting && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-300">
                                 <Check className="h-3 w-3" /> Added
                               </span>
                             )}
                             {contact.enriched && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
                                 <Sparkles className="h-3 w-3" /> Enriched
                               </span>
                             )}
                           </div>
 
                           {contact.job_title && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
                               <Briefcase className="h-3 w-3" />
                               <span className="truncate">{contact.job_title}</span>
                             </div>
@@ -478,11 +478,11 @@ export function ApolloSearchModal({
                           <div className="flex flex-wrap gap-3 text-sm">
                             {/* Show email if enriched */}
                             {contact.email && (
-                              <div className="flex items-center gap-1 text-gray-600">
+                              <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                                 <Mail className="h-3 w-3" />
                                 <a
                                   href={`mailto:${contact.email}`}
-                                  className="hover:text-blue-600 hover:underline"
+                                  className="hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
                                 >
                                   {contact.email}
                                 </a>
@@ -490,7 +490,7 @@ export function ApolloSearchModal({
                                   <button
                                     onClick={() => handleSetAsOrganizationEmail(contact.email!)}
                                     disabled={savingItems.has(`org-email-${contact.email}`)}
-                                    className="ml-1 text-xs text-blue-600 hover:underline"
+                                    className="ml-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
                                     title="Set as organization email"
                                   >
                                     {savingItems.has(`org-email-${contact.email}`) ? (
@@ -504,7 +504,7 @@ export function ApolloSearchModal({
                             )}
                             {/* Show email availability indicator if not enriched */}
                             {!contact.email && contact.has_email && (
-                              <span className="flex items-center gap-1 text-gray-400 text-xs">
+                              <span className="flex items-center gap-1 text-gray-400 dark:text-gray-500 text-xs">
                                 <Mail className="h-3 w-3" />
                                 Email available
                               </span>
@@ -512,14 +512,14 @@ export function ApolloSearchModal({
 
                             {/* Show phone if enriched */}
                             {contact.phone && (
-                              <div className="flex items-center gap-1 text-gray-600">
+                              <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                                 <Phone className="h-3 w-3" />
                                 <span>{contact.phone}</span>
                                 {!hasPhone && !savedItems.has(`org-phone-${contact.phone}`) && (
                                   <button
                                     onClick={() => handleSetAsOrganizationPhone(contact.phone!)}
                                     disabled={savingItems.has(`org-phone-${contact.phone}`)}
-                                    className="ml-1 text-xs text-blue-600 hover:underline"
+                                    className="ml-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
                                     title="Set as organization phone"
                                   >
                                     {savingItems.has(`org-phone-${contact.phone}`) ? (
@@ -533,7 +533,7 @@ export function ApolloSearchModal({
                             )}
                             {/* Show phone availability indicator if not enriched */}
                             {!contact.phone && contact.has_direct_phone && (
-                              <span className="flex items-center gap-1 text-gray-400 text-xs">
+                              <span className="flex items-center gap-1 text-gray-400 dark:text-gray-500 text-xs">
                                 <Phone className="h-3 w-3" />
                                 Phone available
                               </span>
@@ -544,7 +544,7 @@ export function ApolloSearchModal({
                                 href={contact.linkedin_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-blue-600 hover:underline"
+                                className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline"
                               >
                                 <Linkedin className="h-3 w-3" />
                                 LinkedIn
@@ -553,7 +553,7 @@ export function ApolloSearchModal({
                             )}
 
                             {(contact.city || contact.state || contact.country) && (
-                              <span className="text-gray-400">
+                              <span className="text-gray-400 dark:text-gray-500">
                                 {[contact.city, contact.state, contact.country]
                                   .filter(Boolean)
                                   .join(", ")}
@@ -583,7 +583,7 @@ export function ApolloSearchModal({
                             )}
                             {/* Enriched badge */}
                             {contact.enriched && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
                                 <Sparkles className="h-3 w-3" /> Enriched
                               </span>
                             )}
@@ -612,7 +612,7 @@ export function ApolloSearchModal({
               <div className="text-center pt-4">
                 <button
                   onClick={handleSearch}
-                  className="text-sm text-purple-600 hover:underline"
+                  className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
                 >
                   Search again
                 </button>
@@ -622,14 +622,14 @@ export function ApolloSearchModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t px-6 py-4 bg-gray-50">
+        <div className="border-t border-gray-200 dark:border-ng-dark-elevated px-6 py-4 bg-gray-50 dark:bg-ng-dark-bg">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Data provided by Apollo.io. Free tier: ~1,000-2,000 lookups/month.
             </p>
             <button
               onClick={onClose}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              className="rounded-lg border border-gray-300 dark:border-ng-dark-elevated px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-ng-dark-elevated transition-colors"
             >
               Close
             </button>

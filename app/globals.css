@@ -74,6 +74,13 @@
   --color-ng-gray: rgb(128, 128, 128);
   --color-ng-light: rgb(230, 230, 230);
   --color-ng-black: rgb(0, 0, 0);
+
+  /* Dark Mode Surface Colors */
+  --color-ng-dark-bg: rgb(15, 28, 29);
+  --color-ng-dark-card: rgb(26, 44, 45);
+  --color-ng-dark-hover: rgb(30, 49, 50);
+  --color-ng-dark-elevated: rgb(36, 59, 60);
+  --color-ng-dark-deep: rgb(13, 27, 28);
 }
 
 :root {
@@ -136,36 +143,36 @@
 }
 
 .dark {
-  --background: var(--ng-black);
-  --foreground: rgb(245, 245, 245);
-  --card: rgb(30, 45, 46);
-  --card-foreground: rgb(245, 245, 245);
-  --popover: rgb(30, 45, 46);
-  --popover-foreground: rgb(245, 245, 245);
+  --background: rgb(15, 28, 29);
+  --foreground: rgb(240, 240, 240);
+  --card: rgb(26, 44, 45);
+  --card-foreground: rgb(240, 240, 240);
+  --popover: rgb(26, 44, 45);
+  --popover-foreground: rgb(240, 240, 240);
   --primary: var(--ng-yellow);
   --primary-foreground: var(--ng-black);
-  --secondary: rgb(60, 80, 81);
-  --secondary-foreground: rgb(245, 245, 245);
-  --muted: rgb(60, 80, 81);
+  --secondary: rgb(36, 59, 60);
+  --secondary-foreground: rgb(240, 240, 240);
+  --muted: rgb(30, 49, 50);
   --muted-foreground: var(--ng-gray);
   --accent: var(--ng-yellow);
   --accent-foreground: var(--ng-black);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: rgb(60, 80, 81);
-  --input: rgb(60, 80, 81);
+  --border: rgb(45, 67, 68);
+  --input: rgb(45, 67, 68);
   --ring: var(--ng-yellow);
   --chart-1: var(--ng-yellow);
   --chart-2: rgb(77, 104, 105);
   --chart-3: var(--ng-gray);
   --chart-4: rgb(100, 130, 131);
   --chart-5: rgb(189, 221, 56);
-  --sidebar: rgb(20, 35, 36);
-  --sidebar-foreground: rgb(245, 245, 245);
+  --sidebar: rgb(13, 27, 28);
+  --sidebar-foreground: rgb(240, 240, 240);
   --sidebar-primary: var(--ng-yellow);
   --sidebar-primary-foreground: var(--ng-black);
-  --sidebar-accent: rgb(40, 60, 61);
-  --sidebar-accent-foreground: rgb(245, 245, 245);
-  --sidebar-border: rgb(40, 60, 61);
+  --sidebar-accent: rgb(36, 59, 60);
+  --sidebar-accent-foreground: rgb(240, 240, 240);
+  --sidebar-border: rgb(36, 59, 60);
   --sidebar-ring: var(--ng-yellow);
 }
 
@@ -214,5 +221,21 @@
 
 .border-ng-yellow {
   border-color: var(--ng-yellow);
+}
+
+/* Dark mode sidebar/header utilities */
+.bg-ng-dark-deep {
+  background-color: rgb(13, 27, 28);
+}
+
+.bg-ng-dark-card {
+  background-color: rgb(26, 44, 45);
+}
+
+/* Smooth transitions for dark mode switching */
+@layer base {
+  html.dark {
+    color-scheme: dark;
+  }
 }
 

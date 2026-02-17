@@ -6,6 +6,7 @@ import { LayoutShell } from "@/components/layout-shell";
 import { Header } from "@/components/header";
 import { AppStoreProvider } from "@/providers/app-store-provider";
 import { IdleLogoutProvider } from "@/providers/IdleLogoutProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,16 +29,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var t = localStorage.getItem('ng-crm-theme');
+                if (t === 'dark' && window.location.pathname !== '/login') {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AppStoreProvider>
-          <IdleLogoutProvider>
-            <LayoutShell header={<Header />}>
-              {children}
-            </LayoutShell>
-          </IdleLogoutProvider>
+          <ThemeProvider>
+            <IdleLogoutProvider>
+              <LayoutShell header={<Header />}>
+                {children}
+              </LayoutShell>
+            </IdleLogoutProvider>
+          </ThemeProvider>
         </AppStoreProvider>
       </body>
     </html>

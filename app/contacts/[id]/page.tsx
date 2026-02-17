@@ -120,11 +120,11 @@ export default function ContactDetailPage({
     if (!isSuperAdmin) {
       return (
         <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             {label}
           </label>
-          <div className="min-h-[38px] rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900">
-            {contact?.[field]?.toString() || <span className="text-gray-400">-</span>}
+          <div className="min-h-[38px] rounded-md border border-gray-200 dark:border-ng-dark-elevated bg-gray-50 dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+            {contact?.[field]?.toString() || <span className="text-gray-400 dark:text-gray-500">-</span>}
           </div>
         </div>
       );
@@ -132,7 +132,7 @@ export default function ContactDetailPage({
 
     return (
       <div className="space-y-1">
-        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           {label}
         </label>
         <div className="relative">
@@ -143,7 +143,7 @@ export default function ContactDetailPage({
             onBlur={() => handleUpdate(field, localValue)}
             placeholder={placeholder}
             type={type}
-            className="pr-8 transition-colors focus:bg-blue-50/50"
+            className="pr-8 transition-colors focus:bg-blue-50/50 dark:focus:bg-ng-dark-hover"
           />
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
             {savingField === field ? (
@@ -182,11 +182,11 @@ export default function ContactDetailPage({
     if (!isSuperAdmin) {
       return (
         <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             {label}
           </label>
-          <div className="min-h-[38px] rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900">
-            {contact?.[field]?.toString() || <span className="text-gray-400">-</span>}
+          <div className="min-h-[38px] rounded-md border border-gray-200 dark:border-ng-dark-elevated bg-gray-50 dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
+            {contact?.[field]?.toString() || <span className="text-gray-400 dark:text-gray-500">-</span>}
           </div>
         </div>
       );
@@ -194,14 +194,14 @@ export default function ContactDetailPage({
 
     return (
       <div className="space-y-1">
-        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           {label}
         </label>
         <div className="relative">
           <select
             value={localValue}
             onChange={handleChange}
-            className="w-full h-10 px-3 rounded-md border border-gray-300 bg-white text-sm focus:border-blue-500 focus:bg-blue-50/50 focus:outline-none transition-colors"
+            className="w-full h-10 px-3 rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg text-sm dark:text-gray-100 focus:border-blue-500 focus:bg-blue-50/50 dark:focus:bg-ng-dark-hover focus:outline-none transition-colors"
           >
             <option value="">Select...</option>
             {options.map((option) => (
@@ -222,7 +222,7 @@ export default function ContactDetailPage({
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-full items-center justify-center bg-white dark:bg-ng-dark-bg">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
       </div>
     );
@@ -230,7 +230,7 @@ export default function ContactDetailPage({
 
   if (error || !contact) {
     return (
-      <div className="p-6 text-center text-red-600">
+      <div className="p-6 text-center text-red-600 dark:text-red-400">
         Error: {error || "Contact not found"}
       </div>
     );
@@ -246,13 +246,13 @@ export default function ContactDetailPage({
       <div className="flex items-center gap-4 mb-8">
         <button
           onClick={() => router.back()}
-          className="p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+          className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-ng-dark-elevated text-gray-500 dark:text-gray-400 transition-colors"
         >
           <ArrowLeft className="h-6 w-6" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{fullName}</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{fullName}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Created {new Date(contact.created_at).toLocaleDateString()}
           </p>
         </div>
@@ -261,7 +261,7 @@ export default function ContactDetailPage({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
         {/* Basic Info */}
         <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
             Basic Information
           </h3>
           <div className="space-y-4">
@@ -275,7 +275,7 @@ export default function ContactDetailPage({
 
         {/* Contact Info - Phone */}
         <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
             Phone Numbers
           </h3>
           <div className="space-y-4">
@@ -292,7 +292,7 @@ export default function ContactDetailPage({
 
         {/* Contact Info - Email */}
         <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
             Email Addresses
           </h3>
           <div className="space-y-4">
@@ -304,7 +304,7 @@ export default function ContactDetailPage({
 
         {/* Location */}
         <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
             Location
           </h3>
           <div className="space-y-4">
@@ -316,7 +316,7 @@ export default function ContactDetailPage({
 
         {/* Contact Status */}
         <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
             Contact Status
           </h3>
           <div className="space-y-4">
@@ -335,7 +335,7 @@ export default function ContactDetailPage({
 
         {/* Outreach Status */}
         <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
             Outreach Status
           </h3>
           <div className="space-y-4">

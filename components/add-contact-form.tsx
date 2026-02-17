@@ -130,30 +130,30 @@ export function AddContactForm() {
       className="space-y-8 max-w-5xl mx-auto text-sm"
     >
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold text-gray-900">Add Contact</h1>
-        <p className="text-gray-500">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Add Contact</h1>
+        <p className="text-gray-500 dark:text-gray-400">
           Capture all key information about a new contact.
         </p>
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 px-4 py-3 text-sm text-red-800 dark:text-red-300">
           {error}
         </div>
       )}
       {successMessage && (
-        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 px-4 py-3 text-sm text-green-800 dark:text-green-300">
           {successMessage}
         </div>
       )}
 
       {/* Section 1: Basic Information */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Basic Information
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Core identifiers for the contact.
           </p>
         </div>
@@ -213,12 +213,12 @@ export function AddContactForm() {
       </section>
 
       {/* Section 2: Contact Numbers */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Contact Numbers
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Phone numbers and mobile contacts.
           </p>
         </div>
@@ -267,12 +267,12 @@ export function AddContactForm() {
       </section>
 
       {/* Section 3: Email Addresses */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Email Addresses
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Primary and alternative email contacts.
           </p>
         </div>
@@ -314,10 +314,10 @@ export function AddContactForm() {
       </section>
 
       {/* Section 4: Location */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Location</h2>
-          <p className="text-xs text-gray-500">Geographic location details.</p>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Location</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Geographic location details.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
@@ -354,12 +354,12 @@ export function AddContactForm() {
       </section>
 
       {/* Section 5: Contact Status */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Contact Status
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Track contact status and engagement.
           </p>
         </div>
@@ -371,7 +371,7 @@ export function AddContactForm() {
               name="contact_status"
               value={form.contact_status}
               onChange={handleChange}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="h-9 w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               <option value="">Select status</option>
               {CONTACT_STATUSES.map((status) => (
@@ -392,13 +392,13 @@ export function AddContactForm() {
             />
           </div>
           <div className="flex items-center gap-2 md:col-span-2">
-            <label className="inline-flex items-center gap-2 text-xs text-gray-700">
+            <label className="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 name="contacted"
                 checked={form.contacted}
                 onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-gray-300 dark:border-ng-dark-elevated text-blue-600 focus:ring-blue-500"
               />
               Contacted
             </label>
@@ -407,12 +407,12 @@ export function AddContactForm() {
       </section>
 
       {/* Section 5.5: Outreach Status */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Outreach Status
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Track outreach channels - toggle between Done and Not Done.
           </p>
         </div>
@@ -430,8 +430,8 @@ export function AddContactForm() {
               }
               className={`h-9 w-full rounded-md border px-3 text-sm font-medium transition-colors ${
                 form.linkedin_status === "Done"
-                  ? "border-green-500 bg-green-50 text-green-700 hover:bg-green-100"
-                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                  ? "border-green-500 dark:border-green-700 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40"
+                  : "border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ng-dark-hover"
               }`}
             >
               {form.linkedin_status}
@@ -450,8 +450,8 @@ export function AddContactForm() {
               }
               className={`h-9 w-full rounded-md border px-3 text-sm font-medium transition-colors ${
                 form.cold_call_status === "Done"
-                  ? "border-green-500 bg-green-50 text-green-700 hover:bg-green-100"
-                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                  ? "border-green-500 dark:border-green-700 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40"
+                  : "border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ng-dark-hover"
               }`}
             >
               {form.cold_call_status}
@@ -470,8 +470,8 @@ export function AddContactForm() {
               }
               className={`h-9 w-full rounded-md border px-3 text-sm font-medium transition-colors ${
                 form.cold_email_status === "Done"
-                  ? "border-green-500 bg-green-50 text-green-700 hover:bg-green-100"
-                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                  ? "border-green-500 dark:border-green-700 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40"
+                  : "border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-ng-dark-hover"
               }`}
             >
               {form.cold_email_status}
@@ -481,12 +481,12 @@ export function AddContactForm() {
       </section>
 
       {/* Section 6: Bulk Upload */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Bulk Contacts Import
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Upload a CSV or Excel file to add multiple contacts at once.
           </p>
         </div>

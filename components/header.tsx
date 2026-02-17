@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { UserCircle } from "lucide-react";
+import { ThemeToggle } from "./theme-toggle";
 
 export async function Header() {
     const supabase = await createClient();
@@ -12,8 +13,9 @@ export async function Header() {
     const roleLabel = userRole === "super_admin" ? "Super Admin" : "User";
 
     return (
-        <header className="fixed top-0 right-0 left-64 z-30 flex h-16 items-center justify-end border-b border-white/20 bg-ng-teal px-6 shadow-sm">
+        <header className="fixed top-0 right-0 left-52 z-30 flex h-16 items-center justify-end border-b border-white/20 bg-ng-teal dark:bg-ng-dark-deep px-6 shadow-sm transition-colors duration-200">
             <div className="flex items-center gap-4">
+                <ThemeToggle />
                 {user ? (
                     <div className="flex items-center gap-3">
                         <div className="text-right">

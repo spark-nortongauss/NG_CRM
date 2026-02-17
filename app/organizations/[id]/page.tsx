@@ -247,10 +247,10 @@ export default function OrganizationDetailPage({
     if (!isSuperAdmin) {
       return (
         <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             {label}
           </label>
-          <div className="min-h-[38px] rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
+          <div className="min-h-[38px] rounded-md border border-gray-200 dark:border-ng-dark-elevated bg-gray-50 dark:bg-ng-dark-bg px-3 py-2">
             {values.length > 0 ? (
               <div className="space-y-1">
                 {values.map((value: string, index: number) => (
@@ -264,13 +264,13 @@ export default function OrganizationDetailPage({
                         {value}
                       </a>
                     ) : (
-                      <span className="text-gray-900">{value}</span>
+                      <span className="text-gray-900 dark:text-gray-100">{value}</span>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <span className="text-gray-400">-</span>
+              <span className="text-gray-400 dark:text-gray-500">-</span>
             )}
           </div>
         </div>
@@ -290,7 +290,7 @@ export default function OrganizationDetailPage({
               onKeyDown={handleKeyDown}
               onBlur={handleSave}
               placeholder="Enter values separated by commas"
-              className="w-full min-h-[80px] rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full min-h-[80px] rounded-md border border-gray-300 dark:border-ng-dark-elevated dark:bg-ng-dark-card dark:text-gray-100 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               autoFocus
             />
             <p className="text-xs text-gray-400">
@@ -365,15 +365,15 @@ export default function OrganizationDetailPage({
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.back()}
-            className="p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+            className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-ng-dark-elevated text-gray-500 dark:text-gray-400 transition-colors"
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {organization.legal_name}
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Created {new Date(organization.created_at).toLocaleDateString()}
             </p>
           </div>
@@ -405,7 +405,7 @@ export default function OrganizationDetailPage({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
         {/* Basic Info */}
         <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
             Basic Information
           </h3>
           <div className="space-y-4">
@@ -418,7 +418,7 @@ export default function OrganizationDetailPage({
 
         {/* Contact Info */}
         <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
             Contact Information
           </h3>
           <div className="space-y-4">
@@ -439,7 +439,7 @@ export default function OrganizationDetailPage({
 
         {/* Address */}
         <section className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
             Address (HQ)
           </h3>
           <div className="space-y-4">

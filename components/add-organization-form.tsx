@@ -221,33 +221,33 @@ export function AddOrganizationForm({
       className="space-y-8 max-w-5xl mx-auto text-sm"
     >
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold text-gray-900">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
           Add Organization
         </h1>
-        <p className="text-gray-500">
+        <p className="text-gray-500 dark:text-gray-400">
           Capture all key information about a new organization, or upload them
           in bulk via CSV/Excel.
         </p>
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 px-4 py-3 text-sm text-red-800 dark:text-red-300">
           {error}
         </div>
       )}
       {successMessage && (
-        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 px-4 py-3 text-sm text-green-800 dark:text-green-300">
           {successMessage}
         </div>
       )}
 
       {/* Section 1: Basic Information */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Basic Information
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Core identifiers and contact details for the organization.
           </p>
         </div>
@@ -284,7 +284,7 @@ export function AddOrganizationForm({
               name="company_type"
               value={form.company_type}
               onChange={handleChange}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="h-9 w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               required
             >
               <option value="">Select company type</option>
@@ -342,10 +342,10 @@ export function AddOrganizationForm({
       </section>
 
       {/* Section 2: Location */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Location</h2>
-          <p className="text-xs text-gray-500">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Location</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Headquarters address and geographic details.
           </p>
         </div>
@@ -368,7 +368,7 @@ export function AddOrganizationForm({
               name="timezone"
               value={form.timezone}
               onChange={handleChange}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="h-9 w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               <option value="">Select timezone</option>
               {timezoneOptions.map((tz) => (
@@ -429,12 +429,12 @@ export function AddOrganizationForm({
       </section>
 
       {/* Section 3: Business Details */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Business Details
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             How the organization operates and its scale.
           </p>
         </div>
@@ -476,7 +476,7 @@ export function AddOrganizationForm({
               name="business_model"
               value={form.business_model}
               onChange={handleChange}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="h-9 w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               <option value="">Select model</option>
               {BUSINESS_MODELS.map((model) => (
@@ -493,7 +493,7 @@ export function AddOrganizationForm({
               name="employee_count_range"
               value={form.employee_count_range}
               onChange={handleChange}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="h-9 w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               <option value="">Select range</option>
               {EMPLOYEE_RANGES.map((range) => (
@@ -533,12 +533,12 @@ export function AddOrganizationForm({
       </section>
 
       {/* Section 4: Relationship & Ownership */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Relationship & Ownership
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             How this account is managed within your team.
           </p>
         </div>
@@ -550,7 +550,7 @@ export function AddOrganizationForm({
               name="account_owner_user_id"
               value={form.account_owner_user_id}
               onChange={handleChange}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="h-9 w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               <option value="">Unassigned</option>
               {accountOwners.map((owner) => (
@@ -567,7 +567,7 @@ export function AddOrganizationForm({
               name="account_tier"
               value={form.account_tier}
               onChange={handleChange}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="h-9 w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               <option value="">Select tier</option>
               {ACCOUNT_TIERS.map((tier) => (
@@ -584,7 +584,7 @@ export function AddOrganizationForm({
               name="lifecycle_stage"
               value={form.lifecycle_stage}
               onChange={handleChange}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="h-9 w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               <option value="">Select stage</option>
               {LIFECYCLE_STAGES.map((stage) => (
@@ -601,7 +601,7 @@ export function AddOrganizationForm({
               name="source_channel"
               value={form.source_channel}
               onChange={handleChange}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="h-9 w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               <option value="">Select source</option>
               {SOURCE_CHANNELS.map((channel) => (
@@ -625,12 +625,12 @@ export function AddOrganizationForm({
       </section>
 
       {/* Section 5: Legal & Compliance */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Legal & Compliance
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Optional registration and contact preference details.
           </p>
         </div>
@@ -654,23 +654,23 @@ export function AddOrganizationForm({
             />
           </div>
           <div className="flex items-center gap-4 md:col-span-2">
-            <label className="inline-flex items-center gap-2 text-xs text-gray-700">
+            <label className="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 name="marketing_opt_in_status"
                 checked={form.marketing_opt_in_status}
                 onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-gray-300 dark:border-ng-dark-elevated text-blue-600 focus:ring-blue-500"
               />
               Marketing Opt-in
             </label>
-            <label className="inline-flex items-center gap-2 text-xs text-gray-700">
+            <label className="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 name="do_not_contact"
                 checked={form.do_not_contact}
                 onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-gray-300 dark:border-ng-dark-elevated text-blue-600 focus:ring-blue-500"
               />
               Do Not Contact
             </label>
@@ -679,10 +679,10 @@ export function AddOrganizationForm({
       </section>
 
       {/* Section 6: Billing & Bulk Upload */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Billing</h2>
-          <p className="text-xs text-gray-500">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Billing</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Billing details and optional bulk import of organizations.
           </p>
         </div>
@@ -705,7 +705,7 @@ export function AddOrganizationForm({
               name="payment_terms"
               value={form.payment_terms}
               onChange={handleChange}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="h-9 w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               <option value="">Select terms</option>
               {PAYMENT_TERMS.map((term) => (
@@ -722,7 +722,7 @@ export function AddOrganizationForm({
               name="preferred_currency"
               value={form.preferred_currency}
               onChange={handleChange}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="h-9 w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
               {CURRENCIES.map((cur) => (
                 <option key={cur} value={cur}>
@@ -739,14 +739,14 @@ export function AddOrganizationForm({
               value={form.internal_notes}
               onChange={handleChange}
               rows={3}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               placeholder="Any internal context, special handling, or relationship notes."
             />
           </div>
         </div>
 
-        <div className="pt-4 border-t mt-4">
-          <p className="mb-3 text-xs font-medium text-gray-700 uppercase tracking-wide">
+        <div className="pt-4 border-t border-gray-200 dark:border-ng-dark-elevated mt-4">
+          <p className="mb-3 text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">
             Bulk Organizations Import (Optional)
           </p>
           <OrganizationFileUploadZone />
@@ -754,12 +754,12 @@ export function AddOrganizationForm({
       </section>
 
       {/* Section 7: Discovery & Keywords */}
-      <section className="rounded-lg border bg-white p-6 shadow-sm space-y-4">
+      <section className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
             Discovery & Keywords
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Track how this organization was discovered and relevant keywords for
             SEO.
           </p>
@@ -785,7 +785,7 @@ export function AddOrganizationForm({
               value={form.discovery_sources}
               onChange={handleChange}
               rows={3}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="w-full rounded-md border border-input dark:border-ng-dark-elevated bg-transparent dark:bg-ng-dark-card dark:text-gray-100 px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               placeholder='JSON array of SERP results, e.g., [{"url": "...", "title": "..."}]'
             />
           </div>

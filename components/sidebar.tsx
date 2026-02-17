@@ -27,7 +27,7 @@ export function Sidebar() {
     const isActive = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
 
     return (
-        <div className="flex h-screen flex-col bg-ng-teal w-64 fixed left-0 top-0 z-50 overflow-y-auto">
+        <div className="flex h-screen flex-col bg-ng-teal dark:bg-ng-dark-deep w-64 fixed left-0 top-0 z-50 overflow-y-auto transition-colors duration-200">
             {/* Logo Area */}
             <div className="flex h-16 items-center border-b border-white/20 px-6">
                 <span className="text-xl font-bold tracking-tight font-primary">

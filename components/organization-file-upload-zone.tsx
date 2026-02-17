@@ -194,13 +194,13 @@ export function OrganizationFileUploadZone() {
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Need a template? Download the CSV template with all required columns.
         </p>
         <button
           type="button"
           onClick={handleDownloadTemplate}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200 border border-blue-200"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-colors duration-200 border border-blue-200 dark:border-blue-800"
         >
           <Download className="h-4 w-4" />
           Download Template
@@ -214,8 +214,8 @@ export function OrganizationFileUploadZone() {
                     transition-all duration-300 ease-in-out
                     ${
                       isDragging
-                        ? "border-blue-500 bg-blue-50 scale-[1.02]"
-                        : "border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 scale-[1.02]"
+                        : "border-gray-300 dark:border-ng-dark-elevated bg-gray-50 dark:bg-ng-dark-bg hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/30"
                     }
                 `}
       >
@@ -223,30 +223,30 @@ export function OrganizationFileUploadZone() {
           <div
             className={`
                         p-4 rounded-full transition-colors duration-300
-                        ${isDragging ? "bg-blue-100" : "bg-white"}
+                        ${isDragging ? "bg-blue-100 dark:bg-blue-900/40" : "bg-white dark:bg-ng-dark-card"}
                     `}
           >
             <Upload
               className={`
                             h-10 w-10 transition-colors duration-300
-                            ${isDragging ? "text-blue-600" : "text-gray-400"}
+                            ${isDragging ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}
                         `}
             />
           </div>
 
           <div className="space-y-2">
-            <p className="text-base font-semibold text-gray-700">
+            <p className="text-base font-semibold text-gray-700 dark:text-gray-300">
               {isDragging
                 ? "Drop your organizations file here"
                 : "Drag & drop your CSV/Excel here"}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               or{" "}
-              <span className="text-blue-600 font-medium">click to browse</span>
+              <span className="text-blue-600 dark:text-blue-400 font-medium">click to browse</span>
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1.5 rounded-full">
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-ng-dark-card px-3 py-1.5 rounded-full">
             <FileSpreadsheet className="h-4 w-4" />
             <span>Supports: CSV, XLSX, XLS (Max 10MB)</span>
           </div>
@@ -254,8 +254,8 @@ export function OrganizationFileUploadZone() {
       </div>
 
       {files.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+        <div className="bg-white dark:bg-ng-dark-card rounded-xl border border-gray-200 dark:border-ng-dark-elevated p-4 shadow-sm">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
             Bulk Organizations File
           </h3>
 
@@ -263,14 +263,14 @@ export function OrganizationFileUploadZone() {
             <div key={index} className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1">
-                  <div className="p-2 bg-blue-50 rounded-lg">
-                    <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+                  <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                    <FileSpreadsheet className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                       {file.name}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {formatFileSize(file.size)}
                     </p>
                   </div>
@@ -278,32 +278,32 @@ export function OrganizationFileUploadZone() {
 
                 <div className="flex items-center gap-3">
                   {file.status === "success" && (
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                   )}
                   {file.status === "error" && (
-                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
                   )}
                   <button
                     type="button"
                     onClick={handleRemove}
-                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-ng-dark-elevated rounded-full transition-colors"
                   >
-                    <X className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                    <X className="h-4 w-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400" />
                   </button>
                 </div>
               </div>
 
               {file.status === "uploading" && (
-                <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
                   <div
-                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                    className="bg-blue-600 dark:bg-blue-500 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${file.progress}%` }}
                   />
                 </div>
               )}
 
               {file.status === "error" && file.errorMessage && (
-                <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 px-2.5 py-2 rounded-lg">
+                <div className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2.5 py-2 rounded-lg">
                   <AlertCircle className="h-4 w-4" />
                   <span>{file.errorMessage}</span>
                 </div>
@@ -311,41 +311,41 @@ export function OrganizationFileUploadZone() {
 
               {file.status === "success" && file.uploadResponse && (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-2.5 py-2 rounded-lg">
+                  <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2.5 py-2 rounded-lg">
                     <CheckCircle2 className="h-4 w-4" />
                     <span>{file.uploadResponse.message}</span>
                   </div>
 
                   {file.uploadResponse.summary && (
                     <div className="grid grid-cols-3 gap-2 text-[10px]">
-                      <div className="bg-blue-50 px-2 py-1.5 rounded-lg text-center">
-                        <div className="font-semibold text-blue-900">
+                      <div className="bg-blue-50 dark:bg-blue-900/30 px-2 py-1.5 rounded-lg text-center">
+                        <div className="font-semibold text-blue-900 dark:text-blue-300">
                           {file.uploadResponse.summary.total}
                         </div>
-                        <div className="text-blue-600">Total</div>
+                        <div className="text-blue-600 dark:text-blue-300">Total</div>
                       </div>
-                      <div className="bg-green-50 px-2 py-1.5 rounded-lg text-center">
-                        <div className="font-semibold text-green-900">
+                      <div className="bg-green-50 dark:bg-green-900/30 px-2 py-1.5 rounded-lg text-center">
+                        <div className="font-semibold text-green-900 dark:text-green-300">
                           {file.uploadResponse.summary.inserted}
                         </div>
-                        <div className="text-green-600">New</div>
+                        <div className="text-green-600 dark:text-green-300">New</div>
                       </div>
-                      <div className="bg-orange-50 px-2 py-1.5 rounded-lg text-center">
-                        <div className="font-semibold text-orange-900">
+                      <div className="bg-orange-50 dark:bg-orange-900/30 px-2 py-1.5 rounded-lg text-center">
+                        <div className="font-semibold text-orange-900 dark:text-orange-300">
                           {file.uploadResponse.summary.updated || 0}
                         </div>
-                        <div className="text-orange-600">Updated</div>
+                        <div className="text-orange-600 dark:text-orange-400">Updated</div>
                       </div>
                     </div>
                   )}
 
                   {file.uploadResponse.details?.updatedOrganizations &&
                     file.uploadResponse.details.updatedOrganizations.length > 0 && (
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-2.5">
-                        <p className="text-[11px] font-semibold text-orange-900 mb-1.5">
+                      <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 rounded-lg p-2.5">
+                        <p className="text-[11px] font-semibold text-orange-900 dark:text-orange-300 mb-1.5">
                           Updated Organizations (replaced old data):
                         </p>
-                        <div className="text-[11px] text-orange-700 space-y-1 max-h-24 overflow-y-auto">
+                        <div className="text-[11px] text-orange-700 dark:text-orange-300 space-y-1 max-h-24 overflow-y-auto">
                           {file.uploadResponse.details.updatedOrganizations.map(
                             (name, idx) => (
                               <div key={idx}>
@@ -359,11 +359,11 @@ export function OrganizationFileUploadZone() {
 
                   {file.uploadResponse.details?.errors &&
                     file.uploadResponse.details.errors.length > 0 && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-2.5">
-                        <p className="text-[11px] font-semibold text-red-900 mb-1.5">
+                      <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-2.5">
+                        <p className="text-[11px] font-semibold text-red-900 dark:text-red-300 mb-1.5">
                           Import Errors:
                         </p>
-                        <div className="text-[11px] text-red-700 space-y-1 max-h-24 overflow-y-auto">
+                        <div className="text-[11px] text-red-700 dark:text-red-300 space-y-1 max-h-24 overflow-y-auto">
                           {file.uploadResponse.details.errors.map(
                             (error, idx) => (
                               <div key={idx}>

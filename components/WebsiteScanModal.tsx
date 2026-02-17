@@ -366,35 +366,35 @@ export function WebsiteScanModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-lg bg-white shadow-xl">
+      <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-lg bg-white dark:bg-ng-dark-card shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
+        <div className="flex items-center justify-between border-b dark:border-ng-dark-elevated px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
               <Globe className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Website Contact Scraper
               </h2>
-              <p className="text-sm text-gray-500">{organizationName}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{organizationName}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 hover:bg-gray-100 transition-colors"
+            className="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-ng-dark-elevated transition-colors"
           >
-            <X className="h-5 w-5 text-gray-500" />
+            <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
         {/* Content */}
         <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-6">
           {/* Website URL Info */}
-          <div className="mb-6 rounded-lg bg-gray-50 p-4">
+          <div className="mb-6 rounded-lg bg-gray-50 dark:bg-ng-dark-bg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-700">Website URL</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Website URL</p>
                 {websiteUrl ? (
                   <a
                     href={websiteUrl}
@@ -406,27 +406,27 @@ export function WebsiteScanModal({
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 ) : (
-                  <p className="text-sm text-gray-500">No website URL configured</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No website URL configured</p>
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
                 {hasEmail && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
                     <Check className="h-3 w-3" /> Has Email
                   </span>
                 )}
                 {hasPhone && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
                     <Check className="h-3 w-3" /> Has Phone
                   </span>
                 )}
                 {hasLinkedin && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
                     <Check className="h-3 w-3" /> Has LinkedIn
                   </span>
                 )}
                 {hasAddress && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
                     <Check className="h-3 w-3" /> Has Address
                   </span>
                 )}
@@ -440,16 +440,16 @@ export function WebsiteScanModal({
               {!websiteUrl ? (
                 <div className="space-y-4">
                   <AlertCircle className="h-12 w-12 mx-auto text-amber-500" />
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-400">
                     Please add a website URL to this organization first.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-400">
                     Click the button below to scan the website for contact information.
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     This will crawl key pages like /contact, /about, /team, etc.
                   </p>
                   <button
@@ -468,8 +468,8 @@ export function WebsiteScanModal({
           {isScanning && (
             <div className="text-center py-12">
               <Loader2 className="h-12 w-12 mx-auto animate-spin text-blue-600" />
-              <p className="mt-4 text-gray-600">Scanning website...</p>
-              <p className="text-sm text-gray-500">
+              <p className="mt-4 text-gray-600 dark:text-gray-400">Scanning website...</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 This may take up to 30 seconds
               </p>
             </div>
@@ -477,15 +477,15 @@ export function WebsiteScanModal({
 
           {/* Error State */}
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-4 mb-6">
-              <div className="flex items-center gap-2 text-red-700">
+            <div className="rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 p-4 mb-6">
+              <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
                 <AlertCircle className="h-5 w-5" />
                 <p className="font-medium">Scan Failed</p>
               </div>
-              <p className="mt-1 text-sm text-red-600">{error}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
               <button
                 onClick={handleScan}
-                className="mt-3 text-sm text-red-700 hover:underline"
+                className="mt-3 text-sm text-red-700 dark:text-red-300 hover:underline"
               >
                 Try again
               </button>
@@ -497,44 +497,44 @@ export function WebsiteScanModal({
             <div className="space-y-6">
               {/* Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="rounded-lg bg-blue-50 p-4 text-center">
+                <div className="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-4 text-center">
                   <Mail className="h-8 w-8 mx-auto text-blue-600" />
                   <p className="mt-2 text-2xl font-bold text-blue-600">
                     {scanResult.emails.length}
                   </p>
                   <p className="text-sm text-blue-600">Emails Found</p>
                 </div>
-                <div className="rounded-lg bg-green-50 p-4 text-center">
+                <div className="rounded-lg bg-green-50 dark:bg-green-900/30 p-4 text-center">
                   <Phone className="h-8 w-8 mx-auto text-green-600" />
                   <p className="mt-2 text-2xl font-bold text-green-600">
                     {scanResult.phones.length}
                   </p>
                   <p className="text-sm text-green-600">Phones Found</p>
                 </div>
-                <div className={`rounded-lg p-4 text-center ${scanResult.linkedinUrl ? 'bg-sky-50' : 'bg-gray-50'}`}>
-                  <Linkedin className={`h-8 w-8 mx-auto ${scanResult.linkedinUrl ? 'text-sky-600' : 'text-gray-400'}`} />
-                  <p className={`mt-2 text-2xl font-bold ${scanResult.linkedinUrl ? 'text-sky-600' : 'text-gray-400'}`}>
+                <div className={`rounded-lg p-4 text-center ${scanResult.linkedinUrl ? 'bg-sky-50 dark:bg-sky-900/30' : 'bg-gray-50 dark:bg-ng-dark-bg'}`}>
+                  <Linkedin className={`h-8 w-8 mx-auto ${scanResult.linkedinUrl ? 'text-sky-600' : 'text-gray-400 dark:text-gray-500'}`} />
+                  <p className={`mt-2 text-2xl font-bold ${scanResult.linkedinUrl ? 'text-sky-600' : 'text-gray-400 dark:text-gray-500'}`}>
                     {scanResult.linkedinUrl ? '1' : '0'}
                   </p>
-                  <p className={`text-sm ${scanResult.linkedinUrl ? 'text-sky-600' : 'text-gray-400'}`}>LinkedIn</p>
+                  <p className={`text-sm ${scanResult.linkedinUrl ? 'text-sky-600' : 'text-gray-400 dark:text-gray-500'}`}>LinkedIn</p>
                 </div>
-                <div className={`rounded-lg p-4 text-center ${scanResult.address ? 'bg-amber-50' : 'bg-gray-50'}`}>
-                  <MapPin className={`h-8 w-8 mx-auto ${scanResult.address ? 'text-amber-600' : 'text-gray-400'}`} />
-                  <p className={`mt-2 text-2xl font-bold ${scanResult.address ? 'text-amber-600' : 'text-gray-400'}`}>
+                <div className={`rounded-lg p-4 text-center ${scanResult.address ? 'bg-amber-50 dark:bg-amber-900/30' : 'bg-gray-50 dark:bg-ng-dark-bg'}`}>
+                  <MapPin className={`h-8 w-8 mx-auto ${scanResult.address ? 'text-amber-600' : 'text-gray-400 dark:text-gray-500'}`} />
+                  <p className={`mt-2 text-2xl font-bold ${scanResult.address ? 'text-amber-600' : 'text-gray-400 dark:text-gray-500'}`}>
                     {scanResult.address ? '1' : '0'}
                   </p>
-                  <p className={`text-sm ${scanResult.address ? 'text-amber-600' : 'text-gray-400'}`}>Address</p>
+                  <p className={`text-sm ${scanResult.address ? 'text-amber-600' : 'text-gray-400 dark:text-gray-500'}`}>Address</p>
                 </div>
               </div>
 
               {/* LinkedIn URL */}
               {scanResult.linkedinUrl && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
                     <Linkedin className="h-4 w-4 text-sky-600" />
                     LinkedIn Company Page
                   </h3>
-                  <div className="flex items-center justify-between rounded-lg border bg-white p-3">
+                  <div className="flex items-center justify-between rounded-lg border dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-3">
                     <div className="flex-1 min-w-0">
                       <a
                         href={scanResult.linkedinUrl}
@@ -551,7 +551,7 @@ export function WebsiteScanModal({
                         <button
                           onClick={() => handleSaveLinkedinUrl(scanResult.linkedinUrl!)}
                           disabled={savingItems.has("linkedin-url")}
-                          className="inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium bg-sky-100 text-sky-700 hover:bg-sky-200 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-900/50 transition-colors disabled:opacity-50"
                         >
                           {savingItems.has("linkedin-url") ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
@@ -561,7 +561,7 @@ export function WebsiteScanModal({
                           Save to Organization
                         </button>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
                           <Check className="h-3 w-3" />
                           {linkedinSaved ? 'Saved' : 'Already Set'}
                         </span>
@@ -574,18 +574,18 @@ export function WebsiteScanModal({
               {/* Address */}
               {scanResult.address && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
                     <MapPin className="h-4 w-4 text-amber-600" />
                     HQ Address
                   </h3>
-                  <div className="rounded-lg border bg-white p-4">
+                  <div className="rounded-lg border dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-2">
                         {scanResult.address.fullAddress && (
-                          <p className="text-sm text-gray-900">{scanResult.address.fullAddress}</p>
+                          <p className="text-sm text-gray-900 dark:text-gray-100">{scanResult.address.fullAddress}</p>
                         )}
                         {(scanResult.address.addressLine1 || scanResult.address.city || scanResult.address.region || scanResult.address.postalCode || scanResult.address.country) && !scanResult.address.fullAddress && (
-                          <div className="text-sm text-gray-900 space-y-1">
+                          <div className="text-sm text-gray-900 dark:text-gray-100 space-y-1">
                             {scanResult.address.addressLine1 && <p>{scanResult.address.addressLine1}</p>}
                             {scanResult.address.addressLine2 && <p>{scanResult.address.addressLine2}</p>}
                             <p>
@@ -598,7 +598,7 @@ export function WebsiteScanModal({
                             {scanResult.address.country && <p>{scanResult.address.country}</p>}
                           </div>
                         )}
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           Found on: {scanResult.address.source}
                         </p>
                       </div>
@@ -607,7 +607,7 @@ export function WebsiteScanModal({
                           <button
                             onClick={() => handleSaveAddress(scanResult.address!)}
                             disabled={savingItems.has("address")}
-                            className="inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50"
                           >
                             {savingItems.has("address") ? (
                               <Loader2 className="h-3 w-3 animate-spin" />
@@ -617,7 +617,7 @@ export function WebsiteScanModal({
                             Save to Organization
                           </button>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
                             <Check className="h-3 w-3" />
                             {addressSaved ? 'Saved' : 'Already Set'}
                           </span>
@@ -631,7 +631,7 @@ export function WebsiteScanModal({
               {/* Scan Details Toggle */}
               <button
                 onClick={() => setShowDetails(!showDetails)}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               >
                 {showDetails ? "Hide" : "Show"} scan details (
                 {scanResult.pagesScanned.length} pages scanned,{" "}
@@ -639,9 +639,9 @@ export function WebsiteScanModal({
               </button>
 
               {showDetails && (
-                <div className="rounded-lg bg-gray-50 p-4 text-sm">
-                  <p className="font-medium text-gray-700 mb-2">Pages Scanned:</p>
-                  <ul className="list-disc list-inside text-gray-600 mb-4">
+                <div className="rounded-lg bg-gray-50 dark:bg-ng-dark-bg p-4 text-sm">
+                  <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">Pages Scanned:</p>
+                  <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 mb-4">
                     {scanResult.pagesScanned.map((page, i) => (
                       <li key={i} className="truncate">
                         {page}
@@ -650,8 +650,8 @@ export function WebsiteScanModal({
                   </ul>
                   {scanResult.pagesFailed.length > 0 && (
                     <>
-                      <p className="font-medium text-gray-700 mb-2">Failed Pages:</p>
-                      <ul className="list-disc list-inside text-red-600">
+                      <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">Failed Pages:</p>
+                      <ul className="list-disc list-inside text-red-600 dark:text-red-400">
                         {scanResult.pagesFailed.map((page, i) => (
                           <li key={i} className="truncate">
                             {page}
@@ -667,7 +667,7 @@ export function WebsiteScanModal({
               {scanResult.emails.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                       <Mail className="h-4 w-4" />
                       Email Addresses ({scanResult.emails.length})
                     </h3>
@@ -686,7 +686,7 @@ export function WebsiteScanModal({
                       </button>
                     )}
                     {savedItems.has("org-all-emails") && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
                         <Check className="h-3 w-3" /> All Saved
                       </span>
                     )}
@@ -703,15 +703,15 @@ export function WebsiteScanModal({
                       return (
                         <div
                           key={index}
-                          className="flex items-center justify-between rounded-lg border bg-white p-3"
+                          className="flex items-center justify-between rounded-lg border dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-3"
                         >
                           <div>
-                            <p className="font-medium text-gray-900">{email.value}</p>
-                            <p className="text-xs text-gray-500 truncate max-w-md">
+                            <p className="font-medium text-gray-900 dark:text-gray-100">{email.value}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-md">
                               Found on: {email.source}
                             </p>
                             {email.context && (
-                              <p className="text-xs text-gray-400 truncate max-w-md">
+                              <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-md">
                                 Context: {email.context}
                               </p>
                             )}
@@ -723,8 +723,8 @@ export function WebsiteScanModal({
                                 disabled={isSavingOrg || isSavedOrg}
                                 className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
                                   isSavedOrg
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                    : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50"
                                 }`}
                               >
                                 {isSavingOrg ? (
@@ -742,8 +742,8 @@ export function WebsiteScanModal({
                               disabled={isSavingContact || isSavedContact}
                               className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
                                 isSavedContact
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                  : "bg-gray-100 dark:bg-ng-dark-hover text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-ng-dark-elevated"
                               }`}
                             >
                               {isSavingContact ? (
@@ -767,7 +767,7 @@ export function WebsiteScanModal({
               {scanResult.phones.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                       <Phone className="h-4 w-4" />
                       Phone Numbers ({scanResult.phones.length})
                     </h3>
@@ -786,7 +786,7 @@ export function WebsiteScanModal({
                       </button>
                     )}
                     {savedItems.has("org-all-phones") && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
                         <Check className="h-3 w-3" /> All Saved
                       </span>
                     )}
@@ -803,11 +803,11 @@ export function WebsiteScanModal({
                       return (
                         <div
                           key={index}
-                          className="flex items-center justify-between rounded-lg border bg-white p-3"
+                          className="flex items-center justify-between rounded-lg border dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-3"
                         >
                           <div>
-                            <p className="font-medium text-gray-900">{phone.value}</p>
-                            <p className="text-xs text-gray-500 truncate max-w-md">
+                            <p className="font-medium text-gray-900 dark:text-gray-100">{phone.value}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-md">
                               Found on: {phone.source}
                             </p>
                           </div>
@@ -818,8 +818,8 @@ export function WebsiteScanModal({
                                 disabled={isSavingOrg || isSavedOrg}
                                 className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
                                   isSavedOrg
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                    : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50"
                                 }`}
                               >
                                 {isSavingOrg ? (
@@ -837,8 +837,8 @@ export function WebsiteScanModal({
                               disabled={isSavingContact || isSavedContact}
                               className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
                                 isSavedContact
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                  : "bg-gray-100 dark:bg-ng-dark-hover text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-ng-dark-elevated"
                               }`}
                             >
                               {isSavingContact ? (
@@ -865,10 +865,10 @@ export function WebsiteScanModal({
                !scanResult.address && (
                 <div className="text-center py-8">
                   <AlertCircle className="h-12 w-12 mx-auto text-amber-500" />
-                  <p className="mt-4 text-gray-600">
+                  <p className="mt-4 text-gray-600 dark:text-gray-400">
                     No contact information found on the website.
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     The website may use JavaScript to render content, or contact info may be in images.
                   </p>
                 </div>
@@ -878,7 +878,7 @@ export function WebsiteScanModal({
               <div className="text-center pt-4">
                 <button
                   onClick={handleScan}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   Scan again
                 </button>
@@ -888,11 +888,11 @@ export function WebsiteScanModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t px-6 py-4 bg-gray-50">
+        <div className="border-t dark:border-ng-dark-elevated px-6 py-4 bg-gray-50 dark:bg-ng-dark-bg">
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              className="rounded-lg border border-gray-300 dark:border-ng-dark-elevated px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-ng-dark-hover transition-colors"
             >
               Close
             </button>

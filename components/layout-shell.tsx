@@ -19,7 +19,7 @@ export function LayoutShell({
     }
 
     return (
-        <div className="flex min-h-screen bg-background">
+        <div className="flex min-h-screen bg-background transition-colors duration-200">
             <Sidebar />
             <div className="flex-1 flex flex-col pl-64 min-w-0 transition-all duration-300">
                 {header}
