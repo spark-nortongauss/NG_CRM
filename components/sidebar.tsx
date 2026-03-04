@@ -11,14 +11,17 @@ import {
     List,
     ChevronRight,
     ChevronDown,
-    LogOut
+    LogOut,
+    Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/actions/auth";
 import { useUI } from "@/lib/hooks/use-store";
+import { useUserRole } from "@/lib/hooks/use-user-role";
 
 export function Sidebar() {
     const pathname = usePathname();
+    const { isSuperAdmin } = useUserRole();
 
     // Use custom hook for UI state
     const { openMenus, toggleMenu } = useUI();
@@ -148,6 +151,22 @@ export function Sidebar() {
                         <span>Task Board</span>
                     </Link>
                 </div>
+
+                {/* User Settings Menu — Super Admin Only */}
+                {isSuperAdmin && (
+                    <div className="pt-2">
+                        <Link
+                            href="/user-settings"
+                            className={cn(
+                                "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-white/10",
+                                isActive("/user-settings") ? "bg-white/10 text-ng-yellow" : "text-white"
+                            )}
+                        >
+                            <Settings className="h-5 w-5" />
+                            <span>User Settings</span>
+                        </Link>
+                    </div>
+                )}
             </nav>
 
             {/* Logout Section */}

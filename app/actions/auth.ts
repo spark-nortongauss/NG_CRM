@@ -12,6 +12,11 @@ export async function signIn(formData: FormData) {
     password: formData.get("password") as string,
   };
 
+  // Enforce @nortongauss.com domain
+  if (!data.email || !data.email.trim().toLowerCase().endsWith("@nortongauss.com")) {
+    return { error: "Only @nortongauss.com email addresses are allowed." };
+  }
+
   const { data: authData, error } =
     await supabase.auth.signInWithPassword(data);
 
