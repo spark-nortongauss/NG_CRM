@@ -141,7 +141,7 @@ export function Sidebar() {
                 {/* Task Board Menu */}
                 <div className="pt-2">
                     <Link
-                        href="#"
+                        href="/task-board"
                         className={cn(
                             "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-white/10",
                             isActive("/task-board") ? "bg-white/10 text-ng-yellow" : "text-white"
