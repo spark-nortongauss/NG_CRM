@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireSuperAdmin } from "@/lib/auth/role-check";
 import * as cheerio from "cheerio";
 import parser from "parse-address";
 
@@ -810,6 +811,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireSuperAdmin();
+  if (!auth.authorized) return auth.response;
+
   const { id } = await params;
   const supabase = await createClient();
 

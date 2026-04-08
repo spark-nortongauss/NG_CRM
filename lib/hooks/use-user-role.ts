@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 type UserRole = "super_admin" | "user";
 
@@ -14,8 +14,8 @@ interface UserRoleData {
 let cachedRole: UserRole | null = null;
 let fetchPromise: Promise<UserRole> | null = null;
 
-async function fetchUserRole(): Promise<UserRole> {
-  if (cachedRole) return cachedRole;
+async function fetchUserRole(forceRefresh = false): Promise<UserRole> {
+  if (cachedRole && !forceRefresh) return cachedRole;
 
   if (fetchPromise) return fetchPromise;
 
@@ -45,12 +45,13 @@ export function clearRoleCache() {
 
 export function useUserRole(): UserRoleData {
   const [role, setRole] = useState<UserRole>(cachedRole || "user");
-  const [isLoading, setIsLoading] = useState(!cachedRole);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
-    fetchUserRole().then((r) => {
+    // Always revalidate once on mount so role is correct after account switching.
+    fetchUserRole(true).then((r) => {
       if (mounted) {
         setRole(r);
         setIsLoading(false);

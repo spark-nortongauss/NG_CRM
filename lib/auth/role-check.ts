@@ -37,3 +37,16 @@ export async function requireSuperAdmin() {
 
   return { authorized: true as const, userId, role };
 }
+
+export async function requireAuthenticated() {
+  const { role, userId } = await getUserRole();
+
+  if (!userId) {
+    return {
+      authorized: false as const,
+      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
+  return { authorized: true as const, userId, role };
+}

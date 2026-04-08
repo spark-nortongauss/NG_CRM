@@ -4,7 +4,6 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useUserRole } from "@/lib/hooks/use-user-role";
 
 interface Contact {
   id: string;
@@ -45,9 +44,6 @@ export default function ContactDetailPage({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingField, setSavingField] = useState<string | null>(null);
-
-  // Role-based access
-  const { isSuperAdmin } = useUserRole();
 
   useEffect(() => {
     fetchContact();
@@ -116,20 +112,6 @@ export default function ContactDetailPage({
       }
     };
 
-    // Read-only view for regular users
-    if (!isSuperAdmin) {
-      return (
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            {label}
-          </label>
-          <div className="min-h-[38px] rounded-md border border-gray-200 dark:border-ng-dark-elevated bg-gray-50 dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
-            {contact?.[field]?.toString() || <span className="text-gray-400 dark:text-gray-500">-</span>}
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="space-y-1">
         <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -177,20 +159,6 @@ export default function ContactDetailPage({
       setLocalValue(value);
       handleUpdate(field, value);
     };
-
-    // Read-only view for regular users
-    if (!isSuperAdmin) {
-      return (
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            {label}
-          </label>
-          <div className="min-h-[38px] rounded-md border border-gray-200 dark:border-ng-dark-elevated bg-gray-50 dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
-            {contact?.[field]?.toString() || <span className="text-gray-400 dark:text-gray-500">-</span>}
-          </div>
-        </div>
-      );
-    }
 
     return (
       <div className="space-y-1">

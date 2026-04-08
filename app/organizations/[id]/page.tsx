@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Check, Loader2, Users, Globe, Search } from "lucide-react";
+import { ArrowLeft, Loader2, Users, Globe, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { WebsiteScanModal } from "@/components/WebsiteScanModal";
 import { ApolloSearchModal } from "@/components/ApolloSearchModal";
@@ -77,8 +77,6 @@ export default function OrganizationDetailPage({
   const [savingField, setSavingField] = useState<string | null>(null);
   const [showWebsiteScanModal, setShowWebsiteScanModal] = useState(false);
   const [showApolloSearchModal, setShowApolloSearchModal] = useState(false);
-
-  // Role-based access
   const { isSuperAdmin } = useUserRole();
 
   useEffect(() => {
@@ -169,20 +167,6 @@ export default function OrganizationDetailPage({
       }
     };
 
-    // Read-only view for regular users
-    if (!isSuperAdmin) {
-      return (
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {label}
-          </label>
-          <div className="min-h-[38px] rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900">
-            {organization?.[field]?.toString() || <span className="text-gray-400">-</span>}
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="space-y-1">
         <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -193,6 +177,7 @@ export default function OrganizationDetailPage({
             value={localValue}
             onChange={(e) => setLocalValue(e.target.value)}
             onKeyDown={handleKeyDown}
+            onBlur={() => handleUpdate(field, localValue)}
             placeholder={placeholder}
             className="pr-8 transition-colors focus:bg-blue-50/50"
           />
@@ -242,40 +227,6 @@ export default function OrganizationDetailPage({
         setIsEditing(false);
       }
     };
-
-    // Read-only view for regular users
-    if (!isSuperAdmin) {
-      return (
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            {label}
-          </label>
-          <div className="min-h-[38px] rounded-md border border-gray-200 dark:border-ng-dark-elevated bg-gray-50 dark:bg-ng-dark-bg px-3 py-2">
-            {values.length > 0 ? (
-              <div className="space-y-1">
-                {values.map((value: string, index: number) => (
-                  <div key={index} className="text-sm">
-                    {type === "email" ? (
-                      <a href={`mailto:${value}`} className="text-blue-600 hover:underline">
-                        {value}
-                      </a>
-                    ) : type === "tel" ? (
-                      <a href={`tel:${value}`} className="text-blue-600 hover:underline">
-                        {value}
-                      </a>
-                    ) : (
-                      <span className="text-gray-900 dark:text-gray-100">{value}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <span className="text-gray-400 dark:text-gray-500">-</span>
-            )}
-          </div>
-        </div>
-      );
-    }
 
     return (
       <div className="space-y-1">
@@ -380,26 +331,28 @@ export default function OrganizationDetailPage({
         </div>
 
         {/* Contact Discovery Buttons */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowWebsiteScanModal(true)}
-            disabled={!organization.website_url}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            title={organization.website_url ? "Scan website for contact info" : "Add a website URL first"}
-          >
-            <Globe className="h-4 w-4" />
-            Scan Website
-          </button>
-          <button
-            onClick={() => setShowApolloSearchModal(true)}
-            disabled={!organization.website_url}
-            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            title={organization.website_url ? "Search Apollo.io for contacts" : "Add a website URL first"}
-          >
-            <Search className="h-4 w-4" />
-            Find Contacts (Apollo)
-          </button>
-        </div>
+        {isSuperAdmin && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowWebsiteScanModal(true)}
+              disabled={!organization.website_url}
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title={organization.website_url ? "Scan website for contact info" : "Add a website URL first"}
+            >
+              <Globe className="h-4 w-4" />
+              Scan Website
+            </button>
+            <button
+              onClick={() => setShowApolloSearchModal(true)}
+              disabled={!organization.website_url}
+              className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title={organization.website_url ? "Search Apollo.io for contacts" : "Add a website URL first"}
+            >
+              <Search className="h-4 w-4" />
+              Find Contacts (Apollo)
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
@@ -629,41 +582,45 @@ export default function OrganizationDetailPage({
         </section>
       </div>
 
-      {/* Website Scan Modal */}
-      <WebsiteScanModal
-        isOpen={showWebsiteScanModal}
-        onClose={() => setShowWebsiteScanModal(false)}
-        organizationId={organization.org_id}
-        organizationName={organization.legal_name}
-        websiteUrl={organization.website_url}
-        hasEmail={!!organization.primary_email}
-        hasPhone={!!organization.primary_phone_e164}
-        hasLinkedin={!!organization.linkedin_url}
-        hasAddress={!!organization.hq_address_line1}
-        onOrganizationUpdated={() => {
-          fetchOrganization();
-        }}
-        onContactAdded={() => {
-          fetchContacts();
-        }}
-      />
+      {isSuperAdmin && (
+        <>
+          {/* Website Scan Modal */}
+          <WebsiteScanModal
+            isOpen={showWebsiteScanModal}
+            onClose={() => setShowWebsiteScanModal(false)}
+            organizationId={organization.org_id}
+            organizationName={organization.legal_name}
+            websiteUrl={organization.website_url}
+            hasEmail={!!organization.primary_email}
+            hasPhone={!!organization.primary_phone_e164}
+            hasLinkedin={!!organization.linkedin_url}
+            hasAddress={!!organization.hq_address_line1}
+            onOrganizationUpdated={() => {
+              fetchOrganization();
+            }}
+            onContactAdded={() => {
+              fetchContacts();
+            }}
+          />
 
-      {/* Apollo Search Modal */}
-      <ApolloSearchModal
-        isOpen={showApolloSearchModal}
-        onClose={() => setShowApolloSearchModal(false)}
-        organizationId={organization.org_id}
-        organizationName={organization.legal_name}
-        websiteUrl={organization.website_url}
-        hasEmail={!!organization.primary_email}
-        hasPhone={!!organization.primary_phone_e164}
-        onOrganizationUpdated={() => {
-          fetchOrganization();
-        }}
-        onContactAdded={() => {
-          fetchContacts();
-        }}
-      />
+          {/* Apollo Search Modal */}
+          <ApolloSearchModal
+            isOpen={showApolloSearchModal}
+            onClose={() => setShowApolloSearchModal(false)}
+            organizationId={organization.org_id}
+            organizationName={organization.legal_name}
+            websiteUrl={organization.website_url}
+            hasEmail={!!organization.primary_email}
+            hasPhone={!!organization.primary_phone_e164}
+            onOrganizationUpdated={() => {
+              fetchOrganization();
+            }}
+            onContactAdded={() => {
+              fetchContacts();
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }
