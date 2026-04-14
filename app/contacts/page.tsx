@@ -128,6 +128,14 @@ export default function ContactsPage() {
   const [searchType, setSearchType] = useState<"name" | "email">("name");
   const [sortOption, setSortOption] = useState<"" | "name" | "contacts">("");
 
+  const compareStable = (a: Contact, b: Contact) => {
+    // Match backend default order: created_at desc, then id desc
+    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+    if (aTime !== bTime) return bTime - aTime;
+    return (b.id || "").localeCompare(a.id || "");
+  };
+
   // Compute filtered and sorted data
   const getFilteredAndSortedData = () => {
     let data = [...contacts];
@@ -156,7 +164,8 @@ export default function ContactsPage() {
       data.sort((a, b) => {
         const aName = `${a.first_name || ""} ${a.last_name || ""}`.trim();
         const bName = `${b.first_name || ""} ${b.last_name || ""}`.trim();
-        return aName.localeCompare(bName);
+        const cmp = aName.localeCompare(bName);
+        return cmp !== 0 ? cmp : compareStable(a, b);
       });
     } else if (sortOption === "contacts") {
       // Priority: has both email AND phone > has either > has neither
@@ -173,7 +182,8 @@ export default function ContactsPage() {
 
         const aScore = (aHasEmail ? 1 : 0) + (aHasPhone ? 1 : 0);
         const bScore = (bHasEmail ? 1 : 0) + (bHasPhone ? 1 : 0);
-        return bScore - aScore;
+        const scoreCmp = bScore - aScore;
+        return scoreCmp !== 0 ? scoreCmp : compareStable(a, b);
       });
     }
 

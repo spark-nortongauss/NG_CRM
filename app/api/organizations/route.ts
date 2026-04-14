@@ -124,6 +124,8 @@ export async function GET(req: NextRequest) {
         )
       `, { count: "exact" })
       .order("created_at", { ascending: false })
+      // Tie-breaker for deterministic ordering (bulk inserts often share the same created_at)
+      .order("org_id", { ascending: false })
       .range(offset, offset + safeLimit - 1);
 
     if (error) {

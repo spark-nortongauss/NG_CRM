@@ -71,6 +71,18 @@ interface ContactRecord {
     contacted: boolean;
 }
 
+function normalizeHeader(header: string): string {
+    return sanitizeText(header).toLowerCase().trim();
+}
+
+function getRowValue(rowLower: Record<string, string>, keys: string[]): string {
+    for (const key of keys) {
+        const v = rowLower[normalizeHeader(key)];
+        if (v !== undefined && v !== null && String(v).trim() !== "") return String(v);
+    }
+    return "";
+}
+
 /**
  * Parse Excel file (xlsx/xls) and return rows with headers
  */
@@ -196,10 +208,16 @@ export async function POST(request: NextRequest) {
         const errors: Array<{ row: number; error: string }> = [];
 
         rows.forEach((row, index) => {
-            const firstName = row["First Name"] || "";
-            const lastName = row["Last Name"] || "";
-            const organization = row["Organization"] || "";
-            const jobTitle = row["Job Title"] || "";
+            // Normalize headers to be case/whitespace-insensitive and tolerate different templates
+            const rowLower: Record<string, string> = {};
+            Object.entries(row).forEach(([key, value]) => {
+                rowLower[normalizeHeader(key)] = sanitizeValue(value);
+            });
+
+            const firstName = getRowValue(rowLower, ["First Name", "FirstName", "first_name"]);
+            const lastName = getRowValue(rowLower, ["Last Name", "LastName", "last_name"]);
+            const organization = getRowValue(rowLower, ["Organization", "Company", "Company Name"]);
+            const jobTitle = getRowValue(rowLower, ["Job Title", "Title", "Position"]);
 
             // Validate required fields
             if (!firstName && !lastName) {
@@ -214,7 +232,7 @@ export async function POST(request: NextRequest) {
             const duplicateKey = createDuplicateKey(firstName, lastName, organization, jobTitle);
 
             // Map contacted field
-            const contactedValue = (row["Contacted"] || "").toLowerCase();
+            const contactedValue = getRowValue(rowLower, ["Contacted", "Has Been Contacted"]).toLowerCase();
             const contacted = contactedValue === "yes" || contactedValue === "true" || contactedValue === "1";
 
             // Map outreach status fields - default to "Not Done" if not provided or invalid
@@ -226,11 +244,34 @@ export async function POST(request: NextRequest) {
                 return "Not Done";
             };
 
-            const linkedinStatus = parseOutreachStatus(row["LinkedIn"]);
-            const coldCallStatus = parseOutreachStatus(row["Cold Call"]);
-            const coldEmailStatus = parseOutreachStatus(row["Cold E-mail"] || row["Cold Email"]);
+            const linkedinStatus = parseOutreachStatus(getRowValue(rowLower, ["LinkedIn", "LinkedIn Status"]));
+            const coldCallStatus = parseOutreachStatus(getRowValue(rowLower, ["Cold Call", "Cold Call Status"]));
+            const coldEmailStatus = parseOutreachStatus(getRowValue(rowLower, ["Cold E-mail", "Cold Email", "Cold Email Status"]));
 
-            const email1 = row["Email 1"] || "";
+            const email1 = getRowValue(rowLower, ["Email 1", "Email", "Primary Email", "Email Address"]);
+
+            // Phone fields (allow common variants so phone doesn't silently drop)
+            const mobile1 = getRowValue(rowLower, [
+                "Mobile 1",
+                "Mobile",
+                "Mobile Number",
+                "Phone",
+                "Phone Number",
+                "Telephone",
+                "Tel",
+                "Contact Number",
+                "Primary Phone",
+            ]);
+            const mobile2 = getRowValue(rowLower, ["Mobile 2", "Secondary Mobile", "Mobile 2 Number"]);
+            const mobile3 = getRowValue(rowLower, ["Mobile 3", "Tertiary Mobile", "Mobile 3 Number"]);
+            const fixedNumber = getRowValue(rowLower, [
+                "Fixed Number",
+                "Fixed",
+                "Landline",
+                "Land Line",
+                "Office Phone",
+                "Work Phone",
+            ]);
 
             // Create contact record with sanitized values
             const contact: ContactRecord = {
@@ -238,18 +279,18 @@ export async function POST(request: NextRequest) {
                 last_name: lastName,
                 organization: organization,
                 job_title: jobTitle,
-                linkedin_url: row["LinkedIn URL"] || "",
-                mobile_1: row["Mobile 1"] || "",
-                mobile_2: row["Mobile 2"] || "",
-                mobile_3: row["Mobile 3"] || "",
-                fixed_number: row["Fixed Number"] || "",
+                linkedin_url: getRowValue(rowLower, ["LinkedIn URL", "LinkedIn Profile", "LinkedIn"]),
+                mobile_1: mobile1,
+                mobile_2: mobile2,
+                mobile_3: mobile3,
+                fixed_number: fixedNumber,
                 email_1: email1,
-                email_2: row["Email 2"] || "",
-                email_3: row["Email 3"] || "",
-                city: row["City"] || "",
-                state: row["State"] || "",
-                country: row["Country"] || "",
-                contact_status: row["Contact Status"] || "Not Contacted",
+                email_2: getRowValue(rowLower, ["Email 2", "Secondary Email"]),
+                email_3: getRowValue(rowLower, ["Email 3", "Tertiary Email"]),
+                city: getRowValue(rowLower, ["City", "Town"]),
+                state: getRowValue(rowLower, ["State", "Region", "Province"]),
+                country: getRowValue(rowLower, ["Country"]),
+                contact_status: getRowValue(rowLower, ["Contact Status", "Status"]) || "Not Contacted",
                 linkedin_status: linkedinStatus,
                 cold_call_status: coldCallStatus,
                 cold_email_status: coldEmailStatus,

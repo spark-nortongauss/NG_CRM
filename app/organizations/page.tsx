@@ -137,6 +137,14 @@ export default function OrganizationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState<"" | "name" | "contacts">("");
 
+  const compareStable = (a: Organization, b: Organization) => {
+    // Match backend default order: created_at desc, then org_id desc
+    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+    if (aTime !== bTime) return bTime - aTime;
+    return (b.org_id || "").localeCompare(a.org_id || "");
+  };
+
   // Compute filtered and sorted data
   const getFilteredAndSortedData = () => {
     let data = [...organizations];
@@ -151,9 +159,10 @@ export default function OrganizationsPage() {
 
     // Apply sorting
     if (sortOption === "name") {
-      data.sort((a, b) =>
-        (a.legal_name || "").localeCompare(b.legal_name || "")
-      );
+      data.sort((a, b) => {
+        const cmp = (a.legal_name || "").localeCompare(b.legal_name || "");
+        return cmp !== 0 ? cmp : compareStable(a, b);
+      });
     } else if (sortOption === "contacts") {
       // Prioritize organizations with more contact data
       data.sort((a, b) => {
@@ -161,7 +170,8 @@ export default function OrganizationsPage() {
           (a.primary_email ? 1 : 0) + (a.primary_phone_e164 ? 1 : 0);
         const bScore =
           (b.primary_email ? 1 : 0) + (b.primary_phone_e164 ? 1 : 0);
-        return bScore - aScore;
+        const scoreCmp = bScore - aScore;
+        return scoreCmp !== 0 ? scoreCmp : compareStable(a, b);
       });
     }
 
