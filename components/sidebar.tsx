@@ -40,8 +40,22 @@ export function Sidebar() {
             </div>
 
             <nav className="flex-1 space-y-1 p-4">
-                {/* Organizations Menu */}
+                {/* Home / Dashboard */}
                 <div>
+                    <Link
+                        href="/home"
+                        className={cn(
+                            "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-white/10",
+                            isActive("/home") ? "bg-white/10 text-ng-yellow" : "text-white"
+                        )}
+                    >
+                        <LayoutDashboard className="h-5 w-5" />
+                        <span>Home</span>
+                    </Link>
+                </div>
+
+                {/* Organizations Menu */}
+                <div className="pt-2">
                     <button
                         onClick={() => toggleMenu("organizations")}
                         className={cn(

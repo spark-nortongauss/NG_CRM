@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuthenticated, requireSuperAdmin } from "@/lib/auth/role-check";
+import { logActivity } from "@/lib/activity/log";
 
 export async function GET(
   request: NextRequest,
@@ -53,6 +54,7 @@ export async function PATCH(
       .update({
         ...body,
         updated_at: new Date().toISOString(),
+        updated_by_user_id: auth.userId,
       })
       .eq("id", id)
       .select()
@@ -61,6 +63,39 @@ export async function PATCH(
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    const { data: authData } = await supabase.auth.getUser();
+    const actor = authData?.user ?? null;
+    const keys = body && typeof body === "object" ? Object.keys(body) : [];
+    const channel =
+      body?.contact_status === "Email"
+        ? "email"
+        : body?.contact_status === "LinkedIn"
+          ? "linkedin"
+          : body?.contact_status === "Call"
+            ? "phone"
+            : body?.cold_email_status === "Done"
+              ? "email"
+              : body?.cold_call_status === "Done"
+                ? "phone"
+                : body?.linkedin_status === "Done"
+                  ? "linkedin"
+                  : null;
+
+    await logActivity(supabase, {
+      actor_user_id: auth.userId,
+      actor_email: actor?.email ?? null,
+      actor_name: (actor?.user_metadata?.full_name as string | undefined) ?? null,
+      entity_type: "contact",
+      entity_id: id,
+      contact_id: id,
+      action_type: "contact.updated",
+      channel,
+      metadata: {
+        updated_fields: keys,
+        patch: body,
+      },
+    });
 
     return NextResponse.json(data);
   } catch (error) {
@@ -88,6 +123,19 @@ export async function DELETE(
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    const { data: authData } = await supabase.auth.getUser();
+    const actor = authData?.user ?? null;
+    await logActivity(supabase, {
+      actor_user_id: auth.userId,
+      actor_email: actor?.email ?? null,
+      actor_name: (actor?.user_metadata?.full_name as string | undefined) ?? null,
+      entity_type: "contact",
+      entity_id: id,
+      contact_id: id,
+      action_type: "contact.deleted",
+      metadata: {},
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -75,7 +75,7 @@ export async function updateSession(request: NextRequest) {
   if (user && request.nextUrl.pathname === "/login" && !isComingFromRoot) {
     // user is logged in and explicitly navigating to login (not from root), redirect to dashboard
     const url = request.nextUrl.clone();
-    url.pathname = "/organizations";
+    url.pathname = "/home";
     url.searchParams.delete("from"); // Clean up query param
     return NextResponse.redirect(url);
   }

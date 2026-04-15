@@ -30,7 +30,7 @@ export async function signIn(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/organizations");
+  redirect("/home");
 }
 
 export async function signOut() {

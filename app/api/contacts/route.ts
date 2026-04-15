@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity/log";
 
 export async function POST(request: Request) {
   try {
@@ -26,6 +27,9 @@ export async function POST(request: Request) {
       contact_date,
       contacted,
     } = body;
+
+    const { data: authData } = await supabase.auth.getUser();
+    const actor = authData?.user ?? null;
 
     // Validate that at least first_name or last_name is provided
     if (!first_name?.trim() && !last_name?.trim()) {
@@ -57,6 +61,8 @@ export async function POST(request: Request) {
           contact_status: contact_status || null,
           contact_date: contact_date || null,
           contacted: contacted || false,
+          created_by_user_id: actor?.id ?? null,
+          updated_by_user_id: actor?.id ?? null,
         },
       ])
       .select();
@@ -67,6 +73,38 @@ export async function POST(request: Request) {
         { error: error.message || "Failed to create contact" },
         { status: 500 },
       );
+    }
+
+    const created = Array.isArray(data) ? data[0] : null;
+    if (created?.id) {
+      const statusToChannel =
+        typeof created.contact_status === "string"
+          ? created.contact_status.toLowerCase()
+          : "";
+      const channel =
+        statusToChannel === "email"
+          ? "email"
+          : statusToChannel === "linkedin"
+            ? "linkedin"
+            : statusToChannel === "call"
+              ? "phone"
+              : null;
+
+      await logActivity(supabase, {
+        actor_user_id: actor?.id ?? null,
+        actor_email: actor?.email ?? null,
+        actor_name: (actor?.user_metadata?.full_name as string | undefined) ?? null,
+        entity_type: "contact",
+        entity_id: created.id,
+        contact_id: created.id,
+        action_type: "contact.created",
+        channel,
+        metadata: {
+          contact_status: created.contact_status ?? null,
+          contacted: created.contacted ?? null,
+          organization: created.organization ?? null,
+        },
+      });
     }
 
     return NextResponse.json({ data }, { status: 201 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { logActivity } from "@/lib/activity/log";
 
 export async function POST(req: NextRequest) {
   try {
@@ -77,6 +78,24 @@ export async function POST(req: NextRequest) {
       if (tagsError) {
         console.error("Error inserting organization tags:", tagsError);
       }
+    }
+
+    const actor = authData?.user ?? null;
+    if (org?.org_id) {
+      await logActivity(supabase, {
+        actor_user_id: userId,
+        actor_email: actor?.email ?? null,
+        actor_name: (actor?.user_metadata?.full_name as string | undefined) ?? null,
+        entity_type: "organization",
+        entity_id: org.org_id,
+        org_id: org.org_id,
+        action_type: "organization.created",
+        metadata: {
+          legal_name: rest?.legal_name ?? null,
+          source_channel: rest?.source_channel ?? null,
+          tags: parsedTags,
+        },
+      });
     }
 
     return NextResponse.json(

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuthenticated, requireSuperAdmin } from "@/lib/auth/role-check";
+import { logActivity } from "@/lib/activity/log";
 
 export async function GET(
     request: NextRequest,
@@ -63,6 +64,23 @@ export async function PATCH(
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
+        const { data: authData } = await supabase.auth.getUser();
+        const actor = authData?.user ?? null;
+        const keys = body && typeof body === "object" ? Object.keys(body) : [];
+        await logActivity(supabase, {
+            actor_user_id: auth.userId,
+            actor_email: actor?.email ?? null,
+            actor_name: (actor?.user_metadata?.full_name as string | undefined) ?? null,
+            entity_type: "organization",
+            entity_id: id,
+            org_id: id,
+            action_type: "organization.updated",
+            metadata: {
+                updated_fields: keys,
+                patch: body,
+            },
+        });
+
         return NextResponse.json(data);
     } catch (error) {
         return NextResponse.json(
@@ -92,6 +110,19 @@ export async function DELETE(
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
+
+        const { data: authData } = await supabase.auth.getUser();
+        const actor = authData?.user ?? null;
+        await logActivity(supabase, {
+            actor_user_id: auth.userId,
+            actor_email: actor?.email ?? null,
+            actor_name: (actor?.user_metadata?.full_name as string | undefined) ?? null,
+            entity_type: "organization",
+            entity_id: id,
+            org_id: id,
+            action_type: "organization.deleted",
+            metadata: {},
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {
