@@ -396,7 +396,7 @@ export default function ContactsPage() {
           </span>
         ) : (
           <span className="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/30 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-300">
-            Not Done
+            {statusValue}
           </span>
         );
 
