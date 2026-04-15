@@ -126,10 +126,27 @@ export default function OrganizationsPage() {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Pagination state
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [page, setPage] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("orgs-page");
+      return saved ? parseInt(saved, 10) : 1;
+    }
+    return 1;
+  });
+  const [limit, setLimit] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("orgs-limit");
+      return saved ? parseInt(saved, 10) : 10;
+    }
+    return 10;
+  });
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+  useEffect(() => {
+    sessionStorage.setItem("orgs-page", page.toString());
+    sessionStorage.setItem("orgs-limit", limit.toString());
+  }, [page, limit]);
 
   const router = useRouter();
 

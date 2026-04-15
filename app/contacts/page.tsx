@@ -116,10 +116,27 @@ export default function ContactsPage() {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Pagination state
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [page, setPage] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("contacts-page");
+      return saved ? parseInt(saved, 10) : 1;
+    }
+    return 1;
+  });
+  const [limit, setLimit] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("contacts-limit");
+      return saved ? parseInt(saved, 10) : 10;
+    }
+    return 10;
+  });
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+  useEffect(() => {
+    sessionStorage.setItem("contacts-page", page.toString());
+    sessionStorage.setItem("contacts-limit", limit.toString());
+  }, [page, limit]);
 
   const router = useRouter();
 
