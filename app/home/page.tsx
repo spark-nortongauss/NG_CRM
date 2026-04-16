@@ -1,12 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Building2, Mail, Phone, UserRoundPlus, Users } from "lucide-react";
+import { formatActivityLogMessage } from "@/lib/activity/audit-message";
+import DashboardHomeClient from "./dashboard-home-client";
 
-type WeekBucket = {
+export type WeekBucket = {
   key: string;
   label: string;
-  start: Date;
-  end: Date;
   contactsAdded: number;
   contactUpdates: number;
   outreachEmail: number;
@@ -14,7 +12,7 @@ type WeekBucket = {
   outreachLinkedIn: number;
 };
 
-type ActivityRow = {
+export type ActivityRow = {
   id: string;
   occurred_at: string;
   actor_name: string | null;
@@ -23,7 +21,14 @@ type ActivityRow = {
   entity_type: "contact" | "organization" | "task";
   metadata: Record<string, unknown> | null;
   channel: "email" | "phone" | "linkedin" | "meeting" | "other" | null;
+  contact_id: string | null;
+  org_id: string | null;
+  summary: string | null;
+  /** Resolved on the server for reliable client rendering */
+  display_message: any;
 };
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -47,31 +52,10 @@ function formatShortDate(d: Date) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function getActionLabel(actionType: string) {
-  const map: Record<string, string> = {
-    "contact.created": "Contact created",
-    "contact.updated": "Contact updated",
-    "contact.deleted": "Contact deleted",
-    "organization.created": "Organization created",
-    "organization.updated": "Organization updated",
-    "organization.deleted": "Organization deleted",
-    "task.created": "Task created",
-    "task.updated": "Task updated",
-    "task.deleted": "Task deleted",
-  };
-  return map[actionType] ?? actionType;
-}
-
-function getChannelLabel(channel: ActivityRow["channel"]) {
-  if (!channel) return "N/A";
-  if (channel === "linkedin") return "LinkedIn";
-  return channel.charAt(0).toUpperCase() + channel.slice(1);
-}
-
-function getWeeks(count: number): WeekBucket[] {
+function getWeeks(count: number): Array<WeekBucket & { start: Date; end: Date }> {
   const now = new Date();
   const currentWeekStart = startOfWeek(now);
-  const buckets: WeekBucket[] = [];
+  const buckets: Array<WeekBucket & { start: Date; end: Date }> = [];
 
   for (let i = count - 1; i >= 0; i--) {
     const start = addDays(currentWeekStart, -7 * i);
@@ -92,43 +76,64 @@ function getWeeks(count: number): WeekBucket[] {
   return buckets;
 }
 
-function findBucket(buckets: WeekBucket[], value: string | null | undefined) {
+function findBucket<T extends { start: Date; end: Date }>(
+  buckets: T[],
+  value: string | null | undefined,
+) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return buckets.find((bucket) => date >= bucket.start && date < bucket.end) ?? null;
 }
 
-export default async function DashboardHomePage() {
+export default async function DashboardHomePage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const supabase = await createClient();
+  const params = await searchParams;
+  const actorFilter = typeof params.actor === "string" ? params.actor : "";
+  const fromFilter = typeof params.from === "string" ? params.from : "";
+  const toFilter = typeof params.to === "string" ? params.to : "";
+  const hasFilter = Boolean(actorFilter || fromFilter || toFilter);
   const weeks = getWeeks(8);
   const oldestWeekStart = weeks[0]?.start.toISOString() ?? new Date().toISOString();
 
-  const [
-    contactsCountQuery,
-    organizationsCountQuery,
-    activitiesCountQuery,
-    contactsRecentQuery,
-    activityRecentQuery,
-    contactUpdatesQuery,
-  ] = await Promise.all([
-    supabase.from("contacts").select("id", { count: "exact", head: true }),
-    supabase.from("organizations").select("org_id", { count: "exact", head: true }),
-    supabase.from("activity_log").select("id", { count: "exact", head: true }),
-    supabase
-      .from("contacts")
-      .select("created_at, contact_status, cold_email_status, cold_call_status, linkedin_status")
-      .gte("created_at", oldestWeekStart),
+  const [contactsCountQuery, organizationsCountQuery, activitiesCountQuery, contactsRecentQuery, contactUpdatesQuery] =
+    await Promise.all([
+      supabase.from("contacts").select("id", { count: "exact", head: true }),
+      supabase.from("organizations").select("org_id", { count: "exact", head: true }),
+      supabase.from("activity_log").select("id", { count: "exact", head: true }),
+      supabase
+        .from("contacts")
+        .select("created_at, contact_status, cold_email_status, cold_call_status, linkedin_status")
+        .gte("created_at", oldestWeekStart),
+      supabase
+        .from("activity_log")
+        .select("occurred_at, action_type")
+        .eq("action_type", "contact.updated")
+        .gte("occurred_at", oldestWeekStart),
+    ]);
+
+  let activityQuery = supabase
+    .from("activity_log")
+    .select(
+      "id, occurred_at, actor_name, actor_email, action_type, entity_type, metadata, channel, contact_id, org_id, summary",
+    )
+    .order("occurred_at", { ascending: false });
+
+  if (actorFilter) activityQuery = activityQuery.eq("actor_email", actorFilter);
+  if (fromFilter) activityQuery = activityQuery.gte("occurred_at", `${fromFilter}T00:00:00.000Z`);
+  if (toFilter) activityQuery = activityQuery.lte("occurred_at", `${toFilter}T23:59:59.999Z`);
+
+  const [activityRecentQuery, actorOptionsQuery] = await Promise.all([
+    activityQuery.limit(hasFilter ? 200 : 10),
     supabase
       .from("activity_log")
-      .select("id, occurred_at, actor_name, actor_email, action_type, entity_type, metadata, channel")
+      .select("actor_name, actor_email")
       .order("occurred_at", { ascending: false })
-      .limit(12),
-    supabase
-      .from("activity_log")
-      .select("occurred_at, action_type")
-      .eq("action_type", "contact.updated")
-      .gte("occurred_at", oldestWeekStart),
+      .limit(500),
   ]);
 
   if (contactsRecentQuery.data) {
@@ -137,15 +142,9 @@ export default async function DashboardHomePage() {
       if (!bucket) continue;
       bucket.contactsAdded += 1;
 
-      if (row.contact_status === "Email" || row.cold_email_status === "Done") {
-        bucket.outreachEmail += 1;
-      }
-      if (row.contact_status === "Call" || row.cold_call_status === "Done") {
-        bucket.outreachPhone += 1;
-      }
-      if (row.contact_status === "LinkedIn" || row.linkedin_status === "Done") {
-        bucket.outreachLinkedIn += 1;
-      }
+      if (row.contact_status === "Email" || row.cold_email_status === "Done") bucket.outreachEmail += 1;
+      if (row.contact_status === "Call" || row.cold_call_status === "Done") bucket.outreachPhone += 1;
+      if (row.contact_status === "LinkedIn" || row.linkedin_status === "Done") bucket.outreachLinkedIn += 1;
     }
   }
 
@@ -157,206 +156,65 @@ export default async function DashboardHomePage() {
     }
   }
 
-  const contactsTotal = contactsCountQuery.count ?? 0;
-  const organizationsTotal = organizationsCountQuery.count ?? 0;
-  const activityEventsTotal = activitiesCountQuery.count ?? 0;
+  const actorOptions = Array.from(
+    new Map(
+      (actorOptionsQuery.data ?? [])
+        .filter((row) => row.actor_email)
+        .map((row) => [row.actor_email as string, { email: row.actor_email as string, name: row.actor_name ?? null }]),
+    ).values(),
+  );
 
-  const thisWeek = weeks[weeks.length - 1];
-  const previousWeek = weeks[weeks.length - 2];
-  const contactDelta = (thisWeek?.contactsAdded ?? 0) - (previousWeek?.contactsAdded ?? 0);
-  const updateDelta = (thisWeek?.contactUpdates ?? 0) - (previousWeek?.contactUpdates ?? 0);
+  const rawActivities = (activityRecentQuery.data ?? []) as Omit<ActivityRow, "display_message">[];
 
-  const totalEmail = weeks.reduce((sum, week) => sum + week.outreachEmail, 0);
-  const totalPhone = weeks.reduce((sum, week) => sum + week.outreachPhone, 0);
-  const totalLinkedIn = weeks.reduce((sum, week) => sum + week.outreachLinkedIn, 0);
+  const contactIds = [...new Set(rawActivities.map((r) => r.contact_id).filter(Boolean))] as string[];
+  const orgIds = [...new Set(rawActivities.map((r) => r.org_id).filter(Boolean))] as string[];
 
-  const recentActivities = (activityRecentQuery.data ?? []) as ActivityRow[];
+  const [contactsForLabels, orgsForLabels] = await Promise.all([
+    contactIds.length
+      ? supabase.from("contacts").select("id, first_name, last_name").in("id", contactIds)
+      : Promise.resolve({ data: [] as { id: string; first_name: string | null; last_name: string | null }[] }),
+    orgIds.length
+      ? supabase.from("organizations").select("org_id, legal_name, trade_name").in("org_id", orgIds)
+      : Promise.resolve({ data: [] as { org_id: string; legal_name: string | null; trade_name: string | null }[] }),
+  ]);
+
+  const contactNameById = new Map<string, string>();
+  for (const c of contactsForLabels.data ?? []) {
+    const name = [c.first_name, c.last_name].filter(Boolean).join(" ").trim();
+    contactNameById.set(c.id, name || "this contact");
+  }
+
+  const orgNameById = new Map<string, string>();
+  for (const o of orgsForLabels.data ?? []) {
+    const name = (o.legal_name || o.trade_name || "").trim();
+    orgNameById.set(o.org_id, name || "this organization");
+  }
+
+  const recentActivities: ActivityRow[] = rawActivities.map((row) => ({
+    ...row,
+    display_message: formatActivityLogMessage(
+      {
+        action_type: row.action_type,
+        actor_name: row.actor_name,
+        actor_email: row.actor_email,
+        entity_type: row.entity_type,
+        metadata: row.metadata,
+        summary: row.summary,
+      },
+      row.contact_id ? contactNameById.get(row.contact_id) ?? null : null,
+      row.org_id ? orgNameById.get(row.org_id) ?? null : null,
+    ),
+  }));
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard Home</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Weekly CRM evolution for contacts, outreach, and user activity.
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card py-4">
-          <CardHeader className="px-4 pb-1">
-            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Contacts</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4">
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{contactsTotal}</span>
-              <Users className="h-5 w-5 text-blue-500" />
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              This week: {thisWeek?.contactsAdded ?? 0} ({contactDelta >= 0 ? "+" : ""}
-              {contactDelta} vs last week)
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card py-4">
-          <CardHeader className="px-4 pb-1">
-            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Organizations</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4">
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{organizationsTotal}</span>
-              <Building2 className="h-5 w-5 text-purple-500" />
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Accounts currently tracked in CRM.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card py-4">
-          <CardHeader className="px-4 pb-1">
-            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Contact Updates</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4">
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {thisWeek?.contactUpdates ?? 0}
-              </span>
-              <UserRoundPlus className="h-5 w-5 text-emerald-500" />
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {updateDelta >= 0 ? "+" : ""}
-              {updateDelta} vs previous week.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card py-4">
-          <CardHeader className="px-4 pb-1">
-            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Logged Activity</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4">
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{activityEventsTotal}</span>
-              <Activity className="h-5 w-5 text-orange-500" />
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Audit events available for dashboard analytics.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <Card className="xl:col-span-2 border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card py-4">
-          <CardHeader className="px-4 pb-2">
-            <CardTitle className="text-base">Week-by-Week Evolution (Last 8 Weeks)</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-ng-dark-elevated text-left">
-                    <th className="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Week</th>
-                    <th className="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Contacts Added</th>
-                    <th className="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Contacts Updated</th>
-                    <th className="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Email</th>
-                    <th className="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Phone</th>
-                    <th className="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">LinkedIn</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {weeks.map((week) => (
-                    <tr key={week.key} className="border-b border-gray-100 dark:border-ng-dark-elevated/50">
-                      <td className="px-2 py-2 text-gray-800 dark:text-gray-200">{week.label}</td>
-                      <td className="px-2 py-2">{week.contactsAdded}</td>
-                      <td className="px-2 py-2">{week.contactUpdates}</td>
-                      <td className="px-2 py-2">{week.outreachEmail}</td>
-                      <td className="px-2 py-2">{week.outreachPhone}</td>
-                      <td className="px-2 py-2">{week.outreachLinkedIn}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card py-4">
-          <CardHeader className="px-4 pb-2">
-            <CardTitle className="text-base">Outreach Channels (8 Weeks)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 px-4">
-            <div className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-300">Email</span>
-                <Mail className="h-4 w-4 text-blue-500" />
-              </div>
-              <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{totalEmail}</p>
-            </div>
-
-            <div className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-300">Phone</span>
-                <Phone className="h-4 w-4 text-emerald-500" />
-              </div>
-              <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{totalPhone}</p>
-            </div>
-
-            <div className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-300">LinkedIn</span>
-                <div className="h-4 w-4 rounded-full bg-indigo-500" />
-              </div>
-              <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{totalLinkedIn}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card py-4">
-        <CardHeader className="px-4 pb-2">
-          <CardTitle className="text-base">Recent Activity (Who Did What)</CardTitle>
-        </CardHeader>
-        <CardContent className="px-4">
-          {recentActivities.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              No tracked activity yet. Events will appear here as users create and update CRM data.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-ng-dark-elevated text-left">
-                    <th className="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">When</th>
-                    <th className="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Actor</th>
-                    <th className="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Action</th>
-                    <th className="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Entity</th>
-                    <th className="px-2 py-2 font-medium text-gray-500 dark:text-gray-400">Method</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentActivities.map((event) => (
-                    <tr key={event.id} className="border-b border-gray-100 dark:border-ng-dark-elevated/50">
-                      <td className="px-2 py-2 text-gray-700 dark:text-gray-300">
-                        {new Date(event.occurred_at).toLocaleString()}
-                      </td>
-                      <td className="px-2 py-2 text-gray-800 dark:text-gray-200">
-                        {event.actor_name || event.actor_email || "Unknown user"}
-                      </td>
-                      <td className="px-2 py-2">{getActionLabel(event.action_type)}</td>
-                      <td className="px-2 py-2 capitalize">{event.entity_type}</td>
-                      <td className="px-2 py-2">{getChannelLabel(event.channel)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <DashboardHomeClient
+      contactsTotal={contactsCountQuery.count ?? 0}
+      organizationsTotal={organizationsCountQuery.count ?? 0}
+      activityEventsTotal={activitiesCountQuery.count ?? 0}
+      weeks={weeks.map(({ ...rest }) => rest)}
+      recentActivities={recentActivities}
+      actorOptions={actorOptions}
+      filters={{ actor: actorFilter, from: fromFilter, to: toFilter }}
+    />
   );
 }

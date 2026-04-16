@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuthenticated, requireSuperAdmin } from "@/lib/auth/role-check";
-import { logActivity } from "@/lib/activity/log";
+import {
+    buildFieldDiffs,
+    getOrganizationFieldLabels,
+    logActivity,
+} from "@/lib/activity/log";
 
 export async function GET(
     request: NextRequest,
@@ -49,6 +53,12 @@ export async function PATCH(
     const body = await request.json();
 
     try {
+        const { data: existingOrg } = await supabase
+            .from("organizations")
+            .select("*")
+            .eq("org_id", id)
+            .single();
+
         const { data, error } = await supabase
             .from("organizations")
             .update({
@@ -67,6 +77,12 @@ export async function PATCH(
         const { data: authData } = await supabase.auth.getUser();
         const actor = authData?.user ?? null;
         const keys = body && typeof body === "object" ? Object.keys(body) : [];
+        const diffs = buildFieldDiffs(existingOrg, body, getOrganizationFieldLabels());
+        const orgName = data?.legal_name || data?.trade_name || "this organization";
+        const summary =
+            diffs[0]
+                ? `${actor?.user_metadata?.full_name ?? actor?.email ?? "A user"} updated ${diffs[0].label} for ${orgName} (${diffs[0].before} -> ${diffs[0].after})`
+                : `${actor?.user_metadata?.full_name ?? actor?.email ?? "A user"} updated ${orgName}`;
         await logActivity(supabase, {
             actor_user_id: auth.userId,
             actor_email: actor?.email ?? null,
@@ -75,8 +91,12 @@ export async function PATCH(
             entity_id: id,
             org_id: id,
             action_type: "organization.updated",
+            summary,
             metadata: {
+                summary,
+                organization_name: orgName,
                 updated_fields: keys,
+                field_diffs: diffs,
                 patch: body,
             },
         });

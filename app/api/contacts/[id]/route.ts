@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuthenticated, requireSuperAdmin } from "@/lib/auth/role-check";
-import { logActivity } from "@/lib/activity/log";
+import { buildFieldDiffs, getContactFieldLabels, logActivity } from "@/lib/activity/log";
 
 export async function GET(
   request: NextRequest,
@@ -49,6 +49,12 @@ export async function PATCH(
   const body = await request.json();
 
   try {
+    const { data: existingContact } = await supabase
+      .from("contacts")
+      .select("*")
+      .eq("id", id)
+      .single();
+
     const { data, error } = await supabase
       .from("contacts")
       .update({
@@ -67,6 +73,12 @@ export async function PATCH(
     const { data: authData } = await supabase.auth.getUser();
     const actor = authData?.user ?? null;
     const keys = body && typeof body === "object" ? Object.keys(body) : [];
+    const diffs = buildFieldDiffs(existingContact, body, getContactFieldLabels());
+    const contactName = [data?.first_name, data?.last_name].filter(Boolean).join(" ").trim() || "this contact";
+    const summary =
+      diffs[0]
+        ? `${actor?.user_metadata?.full_name ?? actor?.email ?? "A user"} updated ${diffs[0].label} for ${contactName} (${diffs[0].before} -> ${diffs[0].after})`
+        : `${actor?.user_metadata?.full_name ?? actor?.email ?? "A user"} updated ${contactName}`;
     const channel =
       body?.contact_status === "Email"
         ? "email"
@@ -91,8 +103,12 @@ export async function PATCH(
       contact_id: id,
       action_type: "contact.updated",
       channel,
+      summary,
       metadata: {
+        summary,
+        contact_name: contactName,
         updated_fields: keys,
+        field_diffs: diffs,
         patch: body,
       },
     });

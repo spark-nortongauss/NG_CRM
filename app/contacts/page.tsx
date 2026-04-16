@@ -476,11 +476,11 @@ export default function ContactsPage() {
   return (
     <div className="space-y-6 p-6">
       {/* Header with Title and Add Button */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Contacts</h1>
         <Link
           href="/contacts/add"
-          className="flex items-center gap-2 rounded-md bg-ng-teal px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          className="flex items-center justify-center gap-2 rounded-md bg-ng-teal px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 w-full sm:w-auto"
         >
           <Plus className="h-4 w-4" />
           Add Contact
@@ -488,20 +488,22 @@ export default function ContactsPage() {
       </div>
 
       {/* Controls Row: Column Customizer and Bulk Delete */}
-      <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-wrap">
         {/* Column Customizer */}
+        <div className="w-full sm:w-auto">
         <ColumnCustomizer
           allColumns={ALL_COLUMNS}
           defaultColumns={DEFAULT_COLUMNS}
           visibleColumns={visibleColumns}
           onColumnsChange={setVisibleColumns}
           storageKey={STORAGE_KEY}
-        />
+          />
+        </div>
 
         {/* Bulk Delete Controls - Super Admin only */}
         {isSuperAdmin && (
-          <div className="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-3 shadow-sm">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-3 shadow-sm w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2">
               <label
                 htmlFor="bulkDeleteRange"
                 className="text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -534,16 +536,16 @@ export default function ContactsPage() {
           </div>
         )}
 
-        <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+        <span className="sm:ml-auto text-xs text-gray-500 dark:text-gray-400">
           Current page rows: {(page - 1) * limit + 1} -{" "}
           {Math.min(page * limit, totalCount)}
         </span>
       </div>
 
       {/* Search and Sort Controls */}
-      <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-wrap">
         {/* Search Bar with Type Selector */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto flex-1 max-w-full sm:max-w-md">
           <select
             value={searchType}
             onChange={(e) => setSearchType(e.target.value as "name" | "email")}
@@ -565,8 +567,8 @@ export default function ContactsPage() {
         </div>
 
         {/* Sort Dropdown */}
-        <div className="flex items-center gap-2">
-          <ArrowUpDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <ArrowUpDown className="h-4 w-4 text-gray-500 dark:text-gray-400 shrink-0" />
           <select
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value as "" | "name" | "contacts")}
@@ -653,9 +655,9 @@ export default function ContactsPage() {
         </div>
 
         {/* Pagination Controls */}
-        <div className="flex items-center justify-between border-t border-gray-200 dark:border-ng-dark-elevated px-4 py-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>Rows per page:</span>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-t border-gray-200 dark:border-ng-dark-elevated px-4 py-4">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <span>Rows:</span>
             <select
               value={limit}
               onChange={handleLimitChange}
@@ -666,13 +668,13 @@ export default function ContactsPage() {
               <option value="30">30</option>
               <option value="40">40</option>
             </select>
-            <span className="ml-2">
+            <span className="ml-1 md:ml-2">
               Showing {(page - 1) * limit + 1} to{" "}
-              {Math.min(page * limit, totalCount)} of {totalCount} results
+              {Math.min(page * limit, totalCount)} of {totalCount}
             </span>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center justify-center gap-1">
             {/* Previous Button */}
             <button
               onClick={() => handlePageChange(page - 1)}

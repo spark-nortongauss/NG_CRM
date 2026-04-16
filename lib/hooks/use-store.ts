@@ -26,9 +26,12 @@ export const useUI = () => {
     return useAppStore(
         useShallow((state: AppStore) => ({
             openMenus: state.openMenus,
+            isSidebarOpen: state.isSidebarOpen,
             toggleMenu: state.toggleMenu,
             setMenuOpen: state.setMenuOpen,
             closeAllMenus: state.closeAllMenus,
+            toggleSidebar: state.toggleSidebar,
+            setSidebarOpen: state.setSidebarOpen,
         }))
     );
 };

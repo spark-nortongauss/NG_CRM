@@ -12,7 +12,8 @@ import {
     ChevronRight,
     ChevronDown,
     LogOut,
-    Settings
+    Settings,
+    X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/actions/auth";
@@ -24,58 +25,70 @@ export function Sidebar() {
     const { isSuperAdmin } = useUserRole();
 
     // Use custom hook for UI state
-    const { openMenus, toggleMenu } = useUI();
+    const { openMenus, toggleMenu, isSidebarOpen, setSidebarOpen } = useUI();
 
     // Helper to check if a route is active
     const isActive = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
 
     return (
-        <div className="flex h-screen flex-col bg-ng-teal dark:bg-ng-dark-deep w-64 fixed left-0 top-0 z-50 overflow-y-auto transition-colors duration-200">
+        <div className={cn(
+            "flex h-screen flex-col bg-ng-teal dark:bg-ng-dark-deep fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden transition-all duration-300 w-64",
+            isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
+        )}>
             {/* Logo Area */}
-            <div className="flex h-16 items-center border-b border-white/20 px-6">
-                <span className="text-xl font-bold tracking-tight font-primary">
-                    <span className="text-ng-yellow">NG</span>{" "}
-                    <span className="text-white">CRM</span>
+            <div className="flex justify-between h-16 shrink-0 items-center border-b border-white/20 px-6">
+                <span className="text-xl font-bold tracking-tight font-primary whitespace-nowrap overflow-hidden">
+                    <span className="text-ng-yellow">NG</span>
+                    <span className="text-white ml-1">CRM</span>
                 </span>
+                
+                {/* Mobile close button */}
+                <button 
+                  onClick={() => setSidebarOpen(false)}
+                  className="md:hidden flex h-10 w-10 -mr-2 items-center justify-center rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                  aria-label="Close Sidebar"
+                >
+                  <X className="h-6 w-6" />
+                </button>
             </div>
 
-            <nav className="flex-1 space-y-1 p-4">
+            <nav className="flex-1 space-y-2 p-3">
                 {/* Home / Dashboard */}
                 <div>
                     <Link
                         href="/home"
                         className={cn(
-                            "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-white/10",
+                            "flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-white/10 group w-full",
                             isActive("/home") ? "bg-white/10 text-ng-yellow" : "text-white"
                         )}
                     >
-                        <LayoutDashboard className="h-5 w-5" />
-                        <span>Home</span>
+                        <LayoutDashboard className="h-5 w-5 shrink-0" />
+                        <span className="font-medium text-sm whitespace-nowrap">Home</span>
                     </Link>
                 </div>
 
                 {/* Organizations Menu */}
-                <div className="pt-2">
+                <div>
                     <button
                         onClick={() => toggleMenu("organizations")}
                         className={cn(
-                            "flex w-full items-center justify-between rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-white/10",
-                            isActive("/organizations") ? "text-ng-yellow" : "text-white"
+                            "flex items-center justify-between rounded-md px-3 py-2.5 transition-colors hover:bg-white/10 w-full group",
+                            isActive("/organizations") || isActive("/add-org-form") ? "text-ng-yellow" : "text-white"
                         )}
                     >
                         <div className="flex items-center gap-3">
-                            <Building2 className="h-5 w-5" />
-                            <span>Organizations</span>
+                            <Building2 className="h-5 w-5 shrink-0" />
+                            <span className="font-medium text-sm whitespace-nowrap">Organizations</span>
                         </div>
                         {openMenus.organizations ? (
-                            <ChevronDown className="h-4 w-4 text-white/60" />
+                            <ChevronDown className="h-4 w-4 text-white/60 shrink-0" />
                         ) : (
-                            <ChevronRight className="h-4 w-4 text-white/60" />
+                            <ChevronRight className="h-4 w-4 text-white/60 shrink-0" />
                         )}
                     </button>
 
                     {openMenus.organizations && (
-                        <div className="ml-9 mt-1 space-y-1">
+                        <div className="ml-9 mt-1 mb-2 space-y-1">
                             <Link
                                 href="/add-org-form"
                                 className={cn(
@@ -85,8 +98,8 @@ export function Sidebar() {
                                         : "text-white/80"
                                 )}
                             >
-                                <Plus className="h-4 w-4" />
-                                Add Organization
+                                <Plus className="h-4 w-4 shrink-0" />
+                                <span className="whitespace-nowrap">Add Organization</span>
                             </Link>
                             <Link
                                 href="/organizations"
@@ -95,35 +108,35 @@ export function Sidebar() {
                                     pathname === "/organizations" ? "bg-white/10 text-ng-yellow font-medium" : "text-white/80"
                                 )}
                             >
-                                <List className="h-4 w-4" />
-                                Organizations List
+                                <List className="h-4 w-4 shrink-0" />
+                                <span className="whitespace-nowrap">Organizations List</span>
                             </Link>
                         </div>
                     )}
                 </div>
 
                 {/* Contacts Menu */}
-                <div className="pt-2">
+                <div>
                     <button
                         onClick={() => toggleMenu("contacts")}
                         className={cn(
-                            "flex w-full items-center justify-between rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-white/10",
-                            isActive("/contacts") ? "text-ng-yellow" : "text-white"
+                            "flex items-center justify-between rounded-md px-3 py-2.5 transition-colors hover:bg-white/10 w-full group",
+                            isActive("/contacts") ? "text-ng-yellow bg-white/5" : "text-white"
                         )}
                     >
                         <div className="flex items-center gap-3">
-                            <Users className="h-5 w-5" />
-                            <span>Contacts</span>
+                            <Users className="h-5 w-5 shrink-0" />
+                            <span className="font-medium text-sm whitespace-nowrap">Contacts</span>
                         </div>
                         {openMenus.contacts ? (
-                            <ChevronDown className="h-4 w-4 text-white/60" />
+                            <ChevronDown className="h-4 w-4 text-white/60 shrink-0" />
                         ) : (
-                            <ChevronRight className="h-4 w-4 text-white/60" />
+                            <ChevronRight className="h-4 w-4 text-white/60 shrink-0" />
                         )}
                     </button>
 
                     {openMenus.contacts && (
-                        <div className="ml-9 mt-1 space-y-1">
+                        <div className="ml-9 mt-1 mb-2 space-y-1">
                             <Link
                                 href="/contacts/add"
                                 className={cn(
@@ -133,8 +146,8 @@ export function Sidebar() {
                                         : "text-white/80"
                                 )}
                             >
-                                <Plus className="h-4 w-4" />
-                                Add Contact
+                                <Plus className="h-4 w-4 shrink-0" />
+                                <span className="whitespace-nowrap">Add Contact</span>
                             </Link>
                             <Link
                                 href="/contacts"
@@ -145,52 +158,54 @@ export function Sidebar() {
                                         : "text-white/80"
                                 )}
                             >
-                                <List className="h-4 w-4" />
-                                Contacts List
+                                <List className="h-4 w-4 shrink-0" />
+                                <span className="whitespace-nowrap">Contacts List</span>
                             </Link>
                         </div>
                     )}
                 </div>
 
                 {/* Task Board Menu */}
-                <div className="pt-2">
+                <div>
                     <Link
                         href="/task-board"
                         className={cn(
-                            "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-white/10",
+                            "flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-white/10 group w-full",
                             isActive("/task-board") ? "bg-white/10 text-ng-yellow" : "text-white"
                         )}
                     >
-                        <ClipboardList className="h-5 w-5" />
-                        <span>Task Board</span>
+                        <ClipboardList className="h-5 w-5 shrink-0" />
+                        <span className="font-medium text-sm whitespace-nowrap">Task Board</span>
                     </Link>
                 </div>
 
                 {/* User Settings Menu — Super Admin Only */}
                 {isSuperAdmin && (
-                    <div className="pt-2">
+                    <div>
                         <Link
                             href="/user-settings"
                             className={cn(
-                                "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-white/10",
+                                "flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-white/10 group w-full",
                                 isActive("/user-settings") ? "bg-white/10 text-ng-yellow" : "text-white"
                             )}
                         >
-                            <Settings className="h-5 w-5" />
-                            <span>User Settings</span>
+                            <Settings className="h-5 w-5 shrink-0" />
+                            <span className="font-medium text-sm whitespace-nowrap">User Settings</span>
                         </Link>
                     </div>
                 )}
             </nav>
 
             {/* Logout Section */}
-            <div className="border-t border-white/20 p-4">
+            <div className="border-t border-white/20 p-3 shrink-0">
                 <button
                     onClick={() => signOut()}
-                    className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:text-red-400"
+                    className={cn(
+                        "flex items-center gap-3 rounded-md px-3 py-2.5 text-white transition-colors hover:bg-white/10 hover:text-red-400 group w-full"
+                    )}
                 >
-                    <LogOut className="h-5 w-5" />
-                    <span>Logout</span>
+                    <LogOut className="h-5 w-5 shrink-0" />
+                    <span className="font-medium text-sm whitespace-nowrap">Logout</span>
                 </button>
             </div>
         </div>
