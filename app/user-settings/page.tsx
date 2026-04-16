@@ -149,21 +149,21 @@ export default function UserSettingsPage() {
     if (!isSuperAdmin) return null;
 
     return (
-        <div className="min-h-screen p-6 md:p-8">
+        <div className="min-h-screen p-4 sm:p-6 md:p-8">
             {/* Toast Notification */}
             {toast && (
                 <div
-                    className={`fixed top-20 right-6 z-50 flex items-center gap-3 rounded-lg px-5 py-3 shadow-xl transition-all duration-300 animate-in slide-in-from-right ${toast.type === "success"
+                    className={`fixed top-20 right-4 sm:right-6 z-50 max-w-[calc(100vw-2rem)] sm:max-w-md flex items-center gap-3 rounded-lg px-4 sm:px-5 py-3 shadow-xl transition-all duration-300 animate-in slide-in-from-right ${toast.type === "success"
                         ? "bg-emerald-600 text-white"
                         : "bg-red-600 text-white"
                         }`}
                 >
                     {toast.type === "success" ? (
-                        <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+                        <CheckCircle2 className="h-5 w-5 shrink-0" />
                     ) : (
-                        <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                        <AlertCircle className="h-5 w-5 shrink-0" />
                     )}
-                    <span className="text-sm font-medium">{toast.message}</span>
+                    <span className="text-sm font-medium wrap-break-word">{toast.message}</span>
                 </div>
             )}
 
@@ -173,11 +173,11 @@ export default function UserSettingsPage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-ng-teal dark:bg-ng-dark-elevated">
                         <Users className="h-5 w-5 text-ng-yellow" />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white font-primary">
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-white font-primary">
                         User Settings
                     </h1>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 ml-[52px]">
+                <p className="text-sm text-gray-500 dark:text-gray-400 ml-0 sm:ml-[52px]">
                     Manage user roles and permissions across the platform
                 </p>
             </div>
@@ -256,7 +256,7 @@ export default function UserSettingsPage() {
                 ) : (
                     /* Table */
                     <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table className="w-full min-w-[720px] md:min-w-full">
                             <thead>
                                 <tr className="border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-ng-dark-deep">
                                     <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -294,7 +294,7 @@ export default function UserSettingsPage() {
                                         </td>
 
                                         {/* Name */}
-                                        <td className="whitespace-nowrap px-4 py-4">
+                                        <td className="px-4 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ng-teal/10 dark:bg-ng-yellow/10">
                                                     {user.role === "super_admin" ? (
@@ -310,7 +310,7 @@ export default function UserSettingsPage() {
                                         </td>
 
                                         {/* Email */}
-                                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                        <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300 whitespace-normal wrap-break-word">
                                             {user.email}
                                         </td>
 
@@ -348,7 +348,7 @@ export default function UserSettingsPage() {
                                         </td>
 
                                         {/* Last Sign In */}
-                                        <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                        <td className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-normal wrap-break-word">
                                             {formatDateTime(user.last_sign_in_at)}
                                         </td>
 
@@ -384,7 +384,7 @@ export default function UserSettingsPage() {
 
             {/* Delete Confirmation Modal */}
             {confirmDelete && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="relative mx-4 w-full max-w-md rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-ng-dark-card p-6 shadow-2xl">
 
                         {/* Content */}

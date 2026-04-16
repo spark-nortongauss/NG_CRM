@@ -32,23 +32,23 @@ export function Sidebar() {
 
     return (
         <div className={cn(
-            "flex h-screen flex-col bg-ng-teal dark:bg-ng-dark-deep fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden transition-all duration-300 w-64",
-            isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
+            "flex h-screen flex-col bg-ng-teal dark:bg-ng-dark-deep fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden transition-all duration-300 w-64 max-w-[85vw]",
+            isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         )}>
             {/* Logo Area */}
             <div className="flex justify-between h-16 shrink-0 items-center border-b border-white/20 px-6">
-                <span className="text-xl font-bold tracking-tight font-primary whitespace-nowrap overflow-hidden">
+                <span className="text-xl font-bold tracking-tight font-primary truncate">
                     <span className="text-ng-yellow">NG</span>
                     <span className="text-white ml-1">CRM</span>
                 </span>
-                
+
                 {/* Mobile close button */}
-                <button 
-                  onClick={() => setSidebarOpen(false)}
-                  className="md:hidden flex h-10 w-10 -mr-2 items-center justify-center rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                  aria-label="Close Sidebar"
+                <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="md:hidden flex h-10 w-10 -mr-2 items-center justify-center rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                    aria-label="Close Sidebar"
                 >
-                  <X className="h-6 w-6" />
+                    <X className="h-6 w-6" />
                 </button>
             </div>
 
@@ -63,7 +63,7 @@ export function Sidebar() {
                         )}
                     >
                         <LayoutDashboard className="h-5 w-5 shrink-0" />
-                        <span className="font-medium text-sm whitespace-nowrap">Home</span>
+                        <span className="font-medium text-sm truncate">Home</span>
                     </Link>
                 </div>
 
@@ -78,7 +78,7 @@ export function Sidebar() {
                     >
                         <div className="flex items-center gap-3">
                             <Building2 className="h-5 w-5 shrink-0" />
-                            <span className="font-medium text-sm whitespace-nowrap">Organizations</span>
+                            <span className="font-medium text-sm truncate">Organizations</span>
                         </div>
                         {openMenus.organizations ? (
                             <ChevronDown className="h-4 w-4 text-white/60 shrink-0" />
@@ -99,7 +99,7 @@ export function Sidebar() {
                                 )}
                             >
                                 <Plus className="h-4 w-4 shrink-0" />
-                                <span className="whitespace-nowrap">Add Organization</span>
+                                <span className="truncate">Add Organization</span>
                             </Link>
                             <Link
                                 href="/organizations"
@@ -109,7 +109,7 @@ export function Sidebar() {
                                 )}
                             >
                                 <List className="h-4 w-4 shrink-0" />
-                                <span className="whitespace-nowrap">Organizations List</span>
+                                <span className="truncate">Organizations List</span>
                             </Link>
                         </div>
                     )}
@@ -126,7 +126,7 @@ export function Sidebar() {
                     >
                         <div className="flex items-center gap-3">
                             <Users className="h-5 w-5 shrink-0" />
-                            <span className="font-medium text-sm whitespace-nowrap">Contacts</span>
+                            <span className="font-medium text-sm truncate">Contacts</span>
                         </div>
                         {openMenus.contacts ? (
                             <ChevronDown className="h-4 w-4 text-white/60 shrink-0" />
@@ -147,7 +147,7 @@ export function Sidebar() {
                                 )}
                             >
                                 <Plus className="h-4 w-4 shrink-0" />
-                                <span className="whitespace-nowrap">Add Contact</span>
+                                <span className="truncate">Add Contact</span>
                             </Link>
                             <Link
                                 href="/contacts"
@@ -159,7 +159,7 @@ export function Sidebar() {
                                 )}
                             >
                                 <List className="h-4 w-4 shrink-0" />
-                                <span className="whitespace-nowrap">Contacts List</span>
+                                <span className="truncate">Contacts List</span>
                             </Link>
                         </div>
                     )}
@@ -175,7 +175,7 @@ export function Sidebar() {
                         )}
                     >
                         <ClipboardList className="h-5 w-5 shrink-0" />
-                        <span className="font-medium text-sm whitespace-nowrap">Task Board</span>
+                        <span className="font-medium text-sm truncate">Task Board</span>
                     </Link>
                 </div>
 
@@ -190,7 +190,7 @@ export function Sidebar() {
                             )}
                         >
                             <Settings className="h-5 w-5 shrink-0" />
-                            <span className="font-medium text-sm whitespace-nowrap">User Settings</span>
+                            <span className="font-medium text-sm truncate">User Settings</span>
                         </Link>
                     </div>
                 )}
@@ -205,7 +205,7 @@ export function Sidebar() {
                     )}
                 >
                     <LogOut className="h-5 w-5 shrink-0" />
-                    <span className="font-medium text-sm whitespace-nowrap">Logout</span>
+                    <span className="font-medium text-sm truncate">Logout</span>
                 </button>
             </div>
         </div>

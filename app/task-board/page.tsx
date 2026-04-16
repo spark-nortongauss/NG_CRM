@@ -261,7 +261,7 @@ function TaskCard({
         ) : (
           <p
             ref={titleAreaRef as React.RefObject<HTMLParagraphElement>}
-            className="flex-1 text-sm font-medium leading-tight text-gray-800 dark:text-gray-100 break-words pr-6 cursor-text"
+            className="flex-1 text-sm font-medium leading-tight text-gray-800 dark:text-gray-100 wrap-break-word pr-6 cursor-text"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
@@ -322,7 +322,7 @@ function TaskCard({
               title="Click to set due date"
             >
               <Calendar className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate max-w-[85px]">
+              <span className="truncate max-w-[40vw] sm:max-w-[85px]">
                 {task.due_date
                   ? format(new Date(task.due_date), "MMM d, yyyy")
                   : "No date"}
@@ -370,7 +370,7 @@ function TaskCard({
               title="Click to assign"
             >
               <User className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate max-w-[90px]">
+              <span className="truncate max-w-[40vw] sm:max-w-[90px]">
                 {assignee?.full_name || assignee?.email || "Unassigned"}
               </span>
             </button>
@@ -607,11 +607,11 @@ export default function TaskBoardPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md shadow-blue-500/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 shadow-md shadow-blue-500/20">
             <LayoutGrid className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -671,7 +671,7 @@ export default function TaskBoardPage() {
               const task = tasks.find((t) => t.id === activeId);
               if (!task) return null;
               return (
-                <div className="w-[280px] rotate-2 opacity-95">
+                <div className="w-[85vw] max-w-[280px] rotate-2 opacity-95">
                   <TaskCard
                     task={task}
                     users={users}
@@ -695,7 +695,7 @@ export default function TaskBoardPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
               Are you sure you want to delete this task?
             </p>
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-4 break-words">
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-4 wrap-break-word">
               &ldquo;{deleteConfirmTask.title}&rdquo;
             </p>
             <div className="flex gap-2 justify-end">
@@ -766,7 +766,7 @@ function BoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex-1 min-w-[200px] rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-ng-dark-deep flex flex-col min-h-[calc(100vh-220px)] transition-all duration-200",
+        "flex-1 min-w-[85vw] sm:min-w-[260px] md:min-w-[220px] lg:min-w-[200px] rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-ng-dark-deep flex flex-col min-h-[calc(100vh-220px)] transition-all duration-200",
         isOver && "ring-2 ring-blue-500/30 border-blue-300 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10"
       )}
     >

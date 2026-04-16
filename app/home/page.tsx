@@ -2,6 +2,16 @@ import { createClient } from "@/lib/supabase/server";
 import { formatActivityLogMessage } from "@/lib/activity/audit-message";
 import DashboardHomeClient from "./dashboard-home-client";
 
+export type DailyUserStat = {
+  email: string;
+  name: string | null;
+  totalEvents: number;
+  contactsAdded: number;
+  contactsAffected: number;
+  orgsAffected: number;
+  fieldChanges: number;
+};
+
 export type WeekBucket = {
   key: string;
   label: string;
@@ -97,10 +107,20 @@ export default async function DashboardHomePage({
   const fromFilter = typeof params.from === "string" ? params.from : "";
   const toFilter = typeof params.to === "string" ? params.to : "";
   const hasFilter = Boolean(actorFilter || fromFilter || toFilter);
+  const now = new Date();
   const weeks = getWeeks(8);
   const oldestWeekStart = weeks[0]?.start.toISOString() ?? new Date().toISOString();
 
-  const [contactsCountQuery, organizationsCountQuery, activitiesCountQuery, contactsRecentQuery, contactUpdatesQuery] =
+  // Today's UTC window for per-user daily stats
+  const todayUTC = startOfDay(now);
+  const todayStart = new Date(
+    Date.UTC(todayUTC.getFullYear(), todayUTC.getMonth(), todayUTC.getDate(), 0, 0, 0, 0)
+  ).toISOString();
+  const todayEnd = new Date(
+    Date.UTC(todayUTC.getFullYear(), todayUTC.getMonth(), todayUTC.getDate(), 23, 59, 59, 999)
+  ).toISOString();
+
+  const [contactsCountQuery, organizationsCountQuery, activitiesCountQuery, contactsRecentQuery, contactUpdatesQuery, todayLogsQuery] =
     await Promise.all([
       supabase.from("contacts").select("id", { count: "exact", head: true }),
       supabase.from("organizations").select("org_id", { count: "exact", head: true }),
@@ -114,6 +134,11 @@ export default async function DashboardHomePage({
         .select("occurred_at, action_type")
         .eq("action_type", "contact.updated")
         .gte("occurred_at", oldestWeekStart),
+      supabase
+        .from("activity_log")
+        .select("actor_email, actor_name, action_type, entity_type, contact_id, org_id, metadata")
+        .gte("occurred_at", todayStart)
+        .lte("occurred_at", todayEnd),
     ]);
 
   let activityQuery = supabase
@@ -163,6 +188,68 @@ export default async function DashboardHomePage({
         .map((row) => [row.actor_email as string, { email: row.actor_email as string, name: row.actor_name ?? null }]),
     ).values(),
   );
+
+  // ── Fetch ALL users from auth so every user ALWAYS gets a card ───────────
+  // Use admin client (service role) — server-only, safe in a Server Component
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const adminClient = createAdminClient();
+  const { data: authUsersData } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+  const allAuthUsers = (authUsersData?.users ?? [])
+    .map((u) => ({
+      email: u.email ?? "",
+      name: (u.user_metadata?.full_name as string | null) ?? null,
+    }))
+    .filter((u) => u.email);
+
+  // Seed every registered user with zero stats
+  const userStatsMap = new Map<string, DailyUserStat>();
+  for (const u of allAuthUsers) {
+    userStatsMap.set(u.email, {
+      email: u.email,
+      name: u.name,
+      totalEvents: 0,
+      contactsAdded: 0,
+      contactsAffected: 0,
+      orgsAffected: 0,
+      fieldChanges: 0,
+    });
+  }
+
+  // Merge today's activity log data on top of the zero-seed
+  for (const row of todayLogsQuery.data ?? []) {
+    const email = row.actor_email as string | null;
+    if (!email) continue;
+
+    // If actor not in auth (edge case), still add them
+    if (!userStatsMap.has(email)) {
+      userStatsMap.set(email, {
+        email,
+        name: (row.actor_name as string | null) ?? null,
+        totalEvents: 0,
+        contactsAdded: 0,
+        contactsAffected: 0,
+        orgsAffected: 0,
+        fieldChanges: 0,
+      });
+    }
+
+    const stat = userStatsMap.get(email)!;
+    // Prefer activity-log name if auth didn't store a full_name
+    if (!stat.name && row.actor_name) stat.name = row.actor_name as string;
+
+    stat.totalEvents++;
+    if (row.action_type === "contact.created") stat.contactsAdded++;
+    if (row.contact_id as string | null) stat.contactsAffected++;
+    if (row.org_id as string | null) stat.orgsAffected++;
+    const diffs = (row.metadata as Record<string, unknown> | null)?.field_diffs;
+    if (Array.isArray(diffs)) stat.fieldChanges += diffs.length;
+  }
+
+  // Sort: most active first, then alphabetically by display name
+  const dailyUserStats: DailyUserStat[] = Array.from(userStatsMap.values()).sort((a, b) => {
+    if (b.totalEvents !== a.totalEvents) return b.totalEvents - a.totalEvents;
+    return (a.name ?? a.email).toLowerCase().localeCompare((b.name ?? b.email).toLowerCase());
+  });
 
   const rawActivities = (activityRecentQuery.data ?? []) as Omit<ActivityRow, "display_message">[];
 
@@ -215,6 +302,7 @@ export default async function DashboardHomePage({
       recentActivities={recentActivities}
       actorOptions={actorOptions}
       filters={{ actor: actorFilter, from: fromFilter, to: toFilter }}
+      dailyUserStats={dailyUserStats}
     />
   );
 }

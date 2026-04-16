@@ -91,7 +91,7 @@ export function ColumnCustomizer({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute left-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-lg border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-300 dark:border-ng-dark-elevated px-4 py-3">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100">Customize Columns</h3>

@@ -3,11 +3,11 @@
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, Building2, UserRoundPlus, Users } from "lucide-react";
+import { Activity, Building2, UserRoundPlus, Users, Zap, BarChart2, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { ActivityRow, WeekBucket } from "./page";
+import type { ActivityRow, WeekBucket, DailyUserStat } from "./page";
 
 // Norton-Gauss brand palette aligned with globals.css
 const NG_YELLOW = "rgb(217, 255, 53)";
@@ -37,6 +37,7 @@ type Props = {
   recentActivities: ActivityRow[];
   actorOptions: { email: string; name: string | null }[];
   filters: { actor: string; from: string; to: string };
+  dailyUserStats: DailyUserStat[];
 };
 
 function FieldDiffExtra({ event }: { event: ActivityRow }) {
@@ -91,6 +92,7 @@ export default function DashboardHomeClient(props: Props) {
     recentActivities,
     actorOptions,
     filters,
+    dailyUserStats,
   } = props;
   const router = useRouter();
   const pathname = usePathname();
@@ -125,7 +127,7 @@ export default function DashboardHomeClient(props: Props) {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold font-primary text-gray-900 dark:text-gray-100">Dashboard Home</h1>
@@ -213,6 +215,33 @@ export default function DashboardHomeClient(props: Props) {
       {/* Charts */}
       <DashboardHomeCharts weeks={weeks} channelData={channelData} />
 
+      {/* ── Team Daily Contribution ──────────────────────────────────── */}
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <BarChart2 className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold font-primary text-gray-900 dark:text-gray-100">
+            Team&apos;s Work Today
+          </h2>
+        </div>
+
+        <div className="flex flex-col">
+          {dailyUserStats.map((u) => {
+            const displayName = u.name ?? u.email.split("@")[0] ?? u.email;
+            const href = `/home/user-analytics/${encodeURIComponent(u.email)}`;
+            return (
+              <a
+                key={u.email}
+                href={href}
+                className="group flex items-center gap-2 py-2 text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors border-b border-gray-100 dark:border-ng-dark-elevated last:border-b-0"
+              >
+                <ArrowRight className="h-3.5 w-3.5 text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors shrink-0" />
+                {displayName}&apos;s Data Today
+              </a>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Activity Logs */}
       <Card className="border-gray-200 bg-white py-4 dark:border-ng-dark-elevated dark:bg-ng-dark-card shadow-sm">
         <CardHeader className="px-4 pb-4">
@@ -234,11 +263,11 @@ export default function DashboardHomeClient(props: Props) {
             <Input name="to" type="date" defaultValue={filters.to} className="bg-white dark:bg-ng-dark-card" />
             <Button
               type="submit"
-              className="font-semibold bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
+              className="w-full md:w-auto font-semibold bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
             >
               Apply filter
             </Button>
-            <Button type="button" variant="outline" onClick={() => router.push(pathname)} className="hover:bg-accent/10 hover:text-accent-foreground transition-colors">
+            <Button type="button" variant="outline" onClick={() => router.push(pathname)} className="w-full md:w-auto hover:bg-accent/10 hover:text-accent-foreground transition-colors">
               Reset
             </Button>
           </form>

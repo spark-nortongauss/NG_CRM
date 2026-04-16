@@ -474,7 +474,7 @@ export default function ContactsPage() {
   const totalColumnSpan = visibleColumnConfigs.length + (isSuperAdmin ? 2 : 1); // +1 for row number, +1 for actions column (super_admin only)
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       {/* Header with Title and Add Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Contacts</h1>
@@ -554,7 +554,7 @@ export default function ContactsPage() {
             <option value="name">Name</option>
             <option value="email">Email</option>
           </select>
-          <div className="relative flex-1 min-w-[250px]">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
@@ -584,7 +584,7 @@ export default function ContactsPage() {
       <div className="rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card shadow-sm overflow-hidden">
         {/* Table Container with Horizontal Scroll */}
         <div className="overflow-x-auto">
-          <Table className="min-w-[800px]">
+          <Table className="min-w-[640px] md:min-w-[800px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[60px] text-center">#</TableHead>
@@ -594,7 +594,7 @@ export default function ContactsPage() {
                   </TableHead>
                 ))}
                 {isSuperAdmin && (
-                  <TableHead className="w-[80px] text-center sticky right-0 bg-white dark:bg-ng-dark-card shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]">
+                  <TableHead className="w-[80px] text-center md:sticky md:right-0 bg-white dark:bg-ng-dark-card shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]">
                     Actions
                   </TableHead>
                 )}
@@ -635,7 +635,7 @@ export default function ContactsPage() {
                     ))}
                     {isSuperAdmin && (
                       <TableCell
-                        className="text-center sticky right-0 bg-white dark:bg-ng-dark-card shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]"
+                        className="text-center md:sticky md:right-0 bg-white dark:bg-ng-dark-card shadow-[-5px_0px_10px_-5px_rgba(0,0,0,0.1)]"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button

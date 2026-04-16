@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import dynamic from "next/dynamic";
 import "react-quill-new/dist/quill.snow.css";
 
-// Dynamically import ReactQuill to avoid SSR issues (Quill is browser-only)
 const ReactQuill = dynamic(() => import("react-quill-new"), {
   ssr: false,
   loading: () => (
@@ -218,7 +217,7 @@ export default function ContactDetailPage({
     "DoNotCall",
   ] as const;
 
-  // Phone input + a dedicated Call Status select stored on the contact row.
+  // ─── Phone + Call Status ──────────────────────────────────────────
   const PhoneNumberWithCallStatus = ({
     phoneLabel,
     phoneField,
@@ -275,28 +274,27 @@ export default function ContactDetailPage({
           <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             Call Status
           </label>
-          <div className="relative">
-            <select
-              value={statusValue}
-              onChange={(e) => {
-                const value = e.target.value;
-                setStatusValue(value);
-                handleUpdate(statusField, value);
-              }}
-              className="w-full h-10 px-3 rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg text-sm dark:text-gray-100 focus:border-blue-500 focus:bg-blue-50/50 dark:focus:bg-ng-dark-hover focus:outline-none transition-colors"
-            >
-              {CALL_STATUS_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <div className="absolute right-2 top-1/2 -translate-y-1/2">
-              {savingField === statusField ? (
-                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-              ) : null}
-            </div>
-          </div>
+          <select
+            value={statusValue}
+            onChange={(e) => {
+              const value = e.target.value;
+              setStatusValue(value);
+              handleUpdate(statusField, value);
+            }}
+            className={[
+              "w-full h-10 px-3 rounded-md border text-sm dark:text-gray-100 focus:outline-none transition-all duration-200",
+              "bg-white dark:bg-ng-dark-bg",
+              savingField === statusField
+                ? "border-blue-400 dark:border-blue-500 ring-2 ring-blue-100 dark:ring-blue-900/30 animate-pulse"
+                : "border-gray-300 dark:border-ng-dark-elevated focus:border-blue-500 focus:bg-blue-50/50 dark:focus:bg-ng-dark-hover",
+            ].join(" ")}
+          >
+            {CALL_STATUS_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     );
@@ -308,7 +306,6 @@ export default function ContactDetailPage({
     const [noteSaved, setNoteSaved] = useState(false);
     const isSaving = savingField === "note";
 
-    // Sync if contact data reloads
     useEffect(() => {
       setNoteValue(contact?.note || "");
     }, [contact?.note]);
@@ -356,7 +353,6 @@ export default function ContactDetailPage({
 
     return (
       <div className="space-y-3">
-        {/* Quill editor wrapper — override styles to match app theme */}
         <div className="notes-editor-wrapper rounded-md border border-gray-300 dark:border-ng-dark-elevated overflow-hidden">
           <ReactQuill
             theme="snow"
@@ -369,7 +365,6 @@ export default function ContactDetailPage({
           />
         </div>
 
-        {/* Save button row */}
         <div className="flex items-center gap-3">
           <button
             onClick={handleSaveNote}
@@ -422,7 +417,6 @@ export default function ContactDetailPage({
 
   return (
     <>
-      {/* Quill theme override for dark mode + app style */}
       <style>{`
         .notes-editor-wrapper .ql-toolbar {
           border: none !important;
@@ -463,9 +457,9 @@ export default function ContactDetailPage({
         }
       `}</style>
 
-      <div className="max-w-5xl mx-auto p-6 pb-20 space-y-8">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 pb-20 space-y-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-start gap-3 sm:gap-4 mb-8">
           <button
             onClick={() => router.back()}
             className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-ng-dark-elevated text-gray-500 dark:text-gray-400 transition-colors"
@@ -473,7 +467,7 @@ export default function ContactDetailPage({
             <ArrowLeft className="h-6 w-6" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 wrap-break-word">
               {fullName}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -483,7 +477,7 @@ export default function ContactDetailPage({
         </div>
 
         {/* 3-column info grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-x-8 sm:gap-y-10">
           {/* Basic Info */}
           <section className="space-y-4">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
@@ -600,7 +594,7 @@ export default function ContactDetailPage({
           </section>
         </div>
 
-        {/* ── Notes Section (full width) ── */}
+        {/* Notes Section */}
         <section className="space-y-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
             Notes

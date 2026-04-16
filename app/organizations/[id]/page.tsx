@@ -310,9 +310,9 @@ export default function OrganizationDetailPage({
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 pb-20 space-y-8">
+    <div className="max-w-5xl mx-auto p-4 sm:p-6 pb-20 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.back()}
@@ -332,11 +332,11 @@ export default function OrganizationDetailPage({
 
         {/* Contact Discovery Buttons */}
         {isSuperAdmin && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <button
               onClick={() => setShowWebsiteScanModal(true)}
               disabled={!organization.website_url}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full sm:w-auto"
               title={organization.website_url ? "Scan website for contact info" : "Add a website URL first"}
             >
               <Globe className="h-4 w-4" />
@@ -345,7 +345,7 @@ export default function OrganizationDetailPage({
             <button
               onClick={() => setShowApolloSearchModal(true)}
               disabled={!organization.website_url}
-              className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full sm:w-auto"
               title={organization.website_url ? "Search Apollo.io for contacts" : "Add a website URL first"}
             >
               <Search className="h-4 w-4" />
@@ -355,7 +355,7 @@ export default function OrganizationDetailPage({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-x-8 sm:gap-y-10">
         {/* Basic Info */}
         <section className="space-y-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 border-b dark:border-ng-dark-elevated pb-2">
@@ -416,7 +416,7 @@ export default function OrganizationDetailPage({
             <EditableField label="Sub-vertical" field="sub_vertical" />
             <EditableField label="Business Model" field="business_model" />
             <EditableField label="Employees" field="employee_count_range" />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <EditableField
                 label="Revenue"
                 field="annual_revenue_amount"
@@ -478,7 +478,7 @@ export default function OrganizationDetailPage({
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       Full Name
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -502,7 +502,7 @@ export default function OrganizationDetailPage({
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => router.push(`/contacts/${contact.id}`)}
                     >
-                      <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-normal wrap-break-word">
                         <Link
                           href={`/contacts/${contact.id}`}
                           className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
@@ -511,13 +511,13 @@ export default function OrganizationDetailPage({
                           {[contact.first_name, contact.last_name].filter(Boolean).join(" ") || "-"}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-4 py-3 whitespace-normal wrap-break-word text-sm text-gray-600">
                         {contact.job_title || "-"}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-4 py-3 whitespace-normal wrap-break-word text-sm text-gray-600">
                         {contact.fixed_number || "-"}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-4 py-3 whitespace-normal wrap-break-word text-sm text-gray-600">
                         {contact.email_1 ? (
                           <a
                             href={`mailto:${contact.email_1}`}
@@ -530,7 +530,7 @@ export default function OrganizationDetailPage({
                           "-"
                         )}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-4 py-3 whitespace-normal wrap-break-word text-sm text-gray-600">
                         {contact.linkedin_url ? (
                           <a
                             href={contact.linkedin_url}
