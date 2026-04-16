@@ -79,8 +79,23 @@ export async function PATCH(
       diffs[0]
         ? `${actor?.user_metadata?.full_name ?? actor?.email ?? "A user"} updated ${diffs[0].label} for ${contactName} (${diffs[0].before} -> ${diffs[0].after})`
         : `${actor?.user_metadata?.full_name ?? actor?.email ?? "A user"} updated ${contactName}`;
-    const channel =
-      body?.contact_status === "Email"
+    const phoneStatusKeys = [
+      "mobile_1_call_status",
+      "mobile_2_call_status",
+      "mobile_3_call_status",
+      "fixed_number_call_status",
+    ];
+
+    const hasPhoneCallStatusChange =
+      body &&
+      typeof body === "object" &&
+      phoneStatusKeys.some((k) =>
+        Object.prototype.hasOwnProperty.call(body, k),
+      );
+
+    const channel = hasPhoneCallStatusChange
+      ? "phone"
+      : body?.contact_status === "Email"
         ? "email"
         : body?.contact_status === "LinkedIn"
           ? "linkedin"

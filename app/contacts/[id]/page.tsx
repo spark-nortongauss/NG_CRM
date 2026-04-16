@@ -26,6 +26,10 @@ interface Contact {
   mobile_2: string | null;
   mobile_3: string | null;
   fixed_number: string | null;
+  mobile_1_call_status: string | null;
+  mobile_2_call_status: string | null;
+  mobile_3_call_status: string | null;
+  fixed_number_call_status: string | null;
   email_1: string | null;
   email_2: string | null;
   email_3: string | null;
@@ -196,6 +200,102 @@ export default function ContactDetailPage({
             {savingField === field ? (
               <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
             ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const CALL_STATUS_OPTIONS = [
+    "Pending",
+    "NoResponse",
+    "Busy",
+    "Voicemail",
+    "VoicemailFull",
+    "Unreachable",
+    "InvalidNumber",
+    "CallbackScheduled",
+    "DoNotCall",
+  ] as const;
+
+  // Phone input + a dedicated Call Status select stored on the contact row.
+  const PhoneNumberWithCallStatus = ({
+    phoneLabel,
+    phoneField,
+    statusField,
+  }: {
+    phoneLabel: string;
+    phoneField: string;
+    statusField: string;
+  }) => {
+    const [phoneValue, setPhoneValue] = useState(
+      contact?.[phoneField]?.toString() || "",
+    );
+    const [statusValue, setStatusValue] = useState<string>(
+      contact?.[statusField]?.toString() || "Pending",
+    );
+
+    useEffect(() => {
+      setPhoneValue(contact?.[phoneField]?.toString() || "");
+      setStatusValue(contact?.[statusField]?.toString() || "Pending");
+    }, [contact, phoneField, statusField]);
+
+    const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.currentTarget.blur();
+        handleUpdate(phoneField, phoneValue);
+      }
+    };
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            {phoneLabel}
+          </label>
+          <div className="relative">
+            <Input
+              value={phoneValue}
+              onChange={(e) => setPhoneValue(e.target.value)}
+              onKeyDown={handlePhoneKeyDown}
+              onBlur={() => handleUpdate(phoneField, phoneValue)}
+              placeholder="-"
+              type="tel"
+              className="pr-8 transition-colors focus:bg-blue-50/50 dark:focus:bg-ng-dark-hover"
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              {savingField === phoneField ? (
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Call Status
+          </label>
+          <div className="relative">
+            <select
+              value={statusValue}
+              onChange={(e) => {
+                const value = e.target.value;
+                setStatusValue(value);
+                handleUpdate(statusField, value);
+              }}
+              className="w-full h-10 px-3 rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg text-sm dark:text-gray-100 focus:border-blue-500 focus:bg-blue-50/50 dark:focus:bg-ng-dark-hover focus:outline-none transition-colors"
+            >
+              {CALL_STATUS_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              {savingField === statusField ? (
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
@@ -409,13 +509,25 @@ export default function ContactDetailPage({
               Phone Numbers
             </h3>
             <div className="space-y-4">
-              <EditableField label="Mobile 1" field="mobile_1" type="tel" />
-              <EditableField label="Mobile 2" field="mobile_2" type="tel" />
-              <EditableField label="Mobile 3" field="mobile_3" type="tel" />
-              <EditableField
-                label="Fixed Number"
-                field="fixed_number"
-                type="tel"
+              <PhoneNumberWithCallStatus
+                phoneLabel="Mobile 1"
+                phoneField="mobile_1"
+                statusField="mobile_1_call_status"
+              />
+              <PhoneNumberWithCallStatus
+                phoneLabel="Mobile 2"
+                phoneField="mobile_2"
+                statusField="mobile_2_call_status"
+              />
+              <PhoneNumberWithCallStatus
+                phoneLabel="Mobile 3"
+                phoneField="mobile_3"
+                statusField="mobile_3_call_status"
+              />
+              <PhoneNumberWithCallStatus
+                phoneLabel="Fixed Number"
+                phoneField="fixed_number"
+                statusField="fixed_number_call_status"
               />
             </div>
           </section>
