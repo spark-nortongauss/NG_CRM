@@ -155,11 +155,11 @@ export default function OrganizationsPage() {
   const [sortOption, setSortOption] = useState<"" | "name" | "contacts">("");
 
   const compareStable = (a: Organization, b: Organization) => {
-    // Match backend default order: created_at desc, then org_id desc
+    // Match backend default order: created_at asc, then org_id asc
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
     const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-    if (aTime !== bTime) return bTime - aTime;
-    return (b.org_id || "").localeCompare(a.org_id || "");
+    if (aTime !== bTime) return aTime - bTime;
+    return (a.org_id || "").localeCompare(b.org_id || "");
   };
 
   // Compute filtered and sorted data

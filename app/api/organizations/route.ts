@@ -142,9 +142,9 @@ export async function GET(req: NextRequest) {
           email
         )
       `, { count: "exact" })
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: true })
       // Tie-breaker for deterministic ordering (bulk inserts often share the same created_at)
-      .order("org_id", { ascending: false })
+      .order("org_id", { ascending: true })
       .range(offset, offset + safeLimit - 1);
 
     if (error) {

@@ -72,10 +72,11 @@ export async function POST(request: NextRequest) {
 
     // Build the URL with query parameters as per Apollo docs
     // reveal_personal_emails=true for emails (synchronous)
-    // reveal_phone_number=false because it requires webhook (async)
+    // reveal_phone_number=true — Apollo returns phone numbers it already has verified synchronously.
+    // For contacts where Apollo needs to do deep verification, it may still be empty (Apollo data availability).
     const url = new URL("https://api.apollo.io/api/v1/people/match");
     url.searchParams.set("reveal_personal_emails", "true");
-    url.searchParams.set("reveal_phone_number", "false");
+    url.searchParams.set("reveal_phone_number", "true");
 
     console.log("Apollo enrich URL:", url.toString());
 

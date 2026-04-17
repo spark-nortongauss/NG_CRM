@@ -131,9 +131,9 @@ export async function GET(req: NextRequest) {
     const { data, count, error } = await supabase
       .from("contacts")
       .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: true })
       // Tie-breaker for deterministic ordering (bulk inserts often share the same created_at)
-      .order("id", { ascending: false })
+      .order("id", { ascending: true })
       .range(offset, offset + safeLimit - 1);
 
     if (error) {

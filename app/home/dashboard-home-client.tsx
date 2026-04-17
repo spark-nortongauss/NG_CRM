@@ -16,6 +16,13 @@ const NG_TEAL_LIGHT = "rgb(77, 104, 105)";
 const NG_GRAY = "rgb(128, 128, 128)";
 const NG_LIGHT_BLUE = "rgb(100, 130, 131)";
 
+// Avatar palette — inline styles to avoid Tailwind JIT purging arbitrary values
+const AVATAR_VARIANTS: { bg: string; color: string }[] = [
+  { bg: "#d9ff35", color: "#2d4344" }, // NG yellow bg, dark teal text
+  { bg: "#2d4344", color: "#d9ff35" }, // dark teal bg, NG yellow text
+  { bg: "#4d6869", color: "#d9ff35" }, // medium teal bg, NG yellow text
+];
+
 const DashboardHomeCharts = dynamic(() => import("./dashboard-home-charts"), {
   ssr: false,
   loading: () => (
@@ -133,7 +140,7 @@ export default function DashboardHomeClient(props: Props) {
         <h1 className="text-2xl font-bold font-primary text-gray-900 dark:text-gray-100">Dashboard Home</h1>
       </div>
 
-      {/* Stat cards — icons tinted with NG palette */}
+      {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {/* Total Contacts */}
         <Card className="border-gray-200 bg-white py-4 dark:border-ng-dark-elevated dark:bg-ng-dark-card shadow-sm hover:shadow-md transition-shadow">
@@ -217,25 +224,63 @@ export default function DashboardHomeClient(props: Props) {
 
       {/* ── Team Daily Contribution ──────────────────────────────────── */}
       <div>
-        <div className="mb-3 flex items-center gap-2">
-          <BarChart2 className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold font-primary text-gray-900 dark:text-gray-100">
-            Team&apos;s Work Today
-          </h2>
+        {/* Section header */}
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BarChart2 className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold font-primary text-gray-900 dark:text-gray-100">
+              Team&apos;s Work Today
+            </h2>
+          </div>
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            {dailyUserStats.length} active
+          </span>
         </div>
 
-        <div className="flex flex-col">
-          {dailyUserStats.map((u) => {
+        {/* Member cards grid */}
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+          {dailyUserStats.map((u, i) => {
             const displayName = u.name ?? u.email.split("@")[0] ?? u.email;
+            const initials = displayName.slice(0, 2).toUpperCase();
             const href = `/home/user-analytics/${encodeURIComponent(u.email)}`;
+            const av = AVATAR_VARIANTS[i % AVATAR_VARIANTS.length];
+
             return (
               <a
                 key={u.email}
                 href={href}
-                className="group flex items-center gap-2 py-2 text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-primary dark:hover:text-primary transition-colors border-b border-gray-100 dark:border-ng-dark-elevated last:border-b-0"
+                className="group relative flex items-center gap-3 rounded-xl border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card px-4 py-3 overflow-hidden transition-all hover:border-gray-300 dark:hover:border-ng-dark-elevated/80 hover:bg-gray-50/80 dark:hover:bg-ng-dark-elevated/40"
               >
-                <ArrowRight className="h-3.5 w-3.5 text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors shrink-0" />
-                {displayName}&apos;s Data Today
+                {/* Active dot — absolutely positioned top-right */}
+                <span
+                  className="absolute top-3 right-3 h-2 w-2 rounded-full"
+                  style={{
+                    backgroundColor: "#d9ff35",
+                    boxShadow: "0 0 0 3px rgba(217,255,53,0.2)",
+                  }}
+                />
+
+                {/* Avatar with inline styles to guarantee correct colors */}
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                  style={{ backgroundColor: av.bg, color: av.color }}
+                >
+                  {initials}
+                </div>
+
+                {/* Text */}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {displayName}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">View today&apos;s data</p>
+                </div>
+
+                {/* Animated arrow */}
+                <ArrowRight
+                  className="h-3.5 w-3.5 shrink-0 opacity-0 -translate-x-1 transition-all duration-150 group-hover:opacity-100 group-hover:translate-x-0"
+                  style={{ color: "#d9ff35" }}
+                />
               </a>
             );
           })}
@@ -267,7 +312,12 @@ export default function DashboardHomeClient(props: Props) {
             >
               Apply filter
             </Button>
-            <Button type="button" variant="outline" onClick={() => router.push(pathname)} className="w-full md:w-auto hover:bg-accent/10 hover:text-accent-foreground transition-colors">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push(pathname)}
+              className="w-full md:w-auto hover:bg-accent/10 hover:text-accent-foreground transition-colors"
+            >
               Reset
             </Button>
           </form>
