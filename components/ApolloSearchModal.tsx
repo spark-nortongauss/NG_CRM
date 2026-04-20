@@ -553,6 +553,13 @@ export function ApolloSearchModal({
                                 Phone available
                               </span>
                             )}
+                            {/* Show "No phone found" if enriched but still null */}
+                            {!contact.phone && contact.enriched && (
+                              <span className="flex items-center gap-1 text-gray-400 dark:text-gray-500 text-xs italic">
+                                <Phone className="h-3 w-3" />
+                                No phone found
+                              </span>
+                            )}
 
                             {contact.linkedin_url && (
                               <a

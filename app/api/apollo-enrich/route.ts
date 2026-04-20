@@ -273,13 +273,21 @@ export async function POST(request: NextRequest) {
     // Phone reveal can arrive slightly later; poll briefly to capture it before responding.
     let phone = extractPhone(person);
     if (!phone && shouldRequestPhoneReveal && apolloId) {
+      console.log(`Phone not immediately available for ${person.name}. Starting polling...`);
       const followUpUrl = new URL("https://api.apollo.io/api/v1/people/match");
       followUpUrl.searchParams.set("reveal_personal_emails", "true");
+      followUpUrl.searchParams.set("reveal_phone_number", "true");
+      if (webhookUrl) {
+        followUpUrl.searchParams.set("webhook_url", webhookUrl);
+      }
 
       const followUpBody = JSON.stringify({ id: apolloId });
 
-      for (let attempt = 0; attempt < 2 && !phone; attempt++) {
-        await sleep(1200);
+      // Increase attempts to 8 and sleep to 2000ms for a ~16s window.
+      // Phone reveal typically takes 5-15 seconds.
+      for (let attempt = 0; attempt < 8 && !phone; attempt++) {
+        await sleep(2000);
+        console.log(`Polling Apollo for phone (attempt ${attempt + 1})...`);
 
         const followUpResponse = await fetch(followUpUrl.toString(), {
           method: "POST",
@@ -292,23 +300,28 @@ export async function POST(request: NextRequest) {
           body: followUpBody,
         });
 
-        if (!followUpResponse.ok) continue;
+        if (!followUpResponse.ok) {
+          console.error(`Follow-up polling failed (status ${followUpResponse.status})`);
+          continue;
+        }
+        
         const followUpData: ApolloEnrichResponse = await followUpResponse.json();
         if (!followUpData.person) continue;
 
         person = followUpData.person;
 
-        // Log follow-up phone fields too
-        console.log(`Apollo follow-up phone fields (attempt ${attempt + 1}):`, JSON.stringify({
+        // Log follow-up phone fields
+        console.log(`Apollo follow-up fields (attempt ${attempt + 1}) for ${person.name}:`, JSON.stringify({
           phone: person.phone,
           mobile_phone: person.mobile_phone,
           direct_phone: person.direct_phone,
-          corporate_phone: person.corporate_phone,
-          sanitized_phone: person.sanitized_phone,
           phone_numbers: person.phone_numbers,
         }, null, 2));
 
         phone = extractPhone(person);
+        if (phone) {
+          console.log(`Phone found for ${person.name} on attempt ${attempt + 1}: ${phone}`);
+        }
       }
     }
 
