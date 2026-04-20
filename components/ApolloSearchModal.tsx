@@ -133,22 +133,26 @@ export function ApolloSearchModal({
       }
 
       if (enrichData.success && enrichData.contact) {
-        // Update the contact in the list with enriched data
         setContacts((prev) =>
           prev.map((c) =>
             c.id === contact.id
               ? {
                   ...c,
                   full_name: enrichData.contact.full_name || c.full_name,
-                  // Get full last name from enrichment
                   last_name: enrichData.contact.last_name || c.last_name,
                   first_name: enrichData.contact.first_name || c.first_name,
-                  email: enrichData.contact.email || c.email,
-                  phone: enrichData.contact.phone || c.phone,
+                  // Use ?? so that a real null/undefined from enrichment doesn't
+                  // fall through to stale pre-enrichment values.
+                  email: enrichData.contact.email ?? c.email,
+                  phone: enrichData.contact.phone ?? null,
                   linkedin_url: enrichData.contact.linkedin_url || c.linkedin_url,
                   city: enrichData.contact.city || c.city,
                   state: enrichData.contact.state || c.state,
                   country: enrichData.contact.country || c.country,
+                  // Clear the "available" flags so placeholders never show after
+                  // enrichment regardless of whether Apollo returned data.
+                  has_email: false,
+                  has_direct_phone: false,
                   enriched: true,
                 }
               : c
@@ -487,7 +491,7 @@ export function ApolloSearchModal({
                           )}
 
                           <div className="flex flex-wrap gap-3 text-sm">
-                            {/* Show email if enriched */}
+                            {/* Show actual email if returned by enrichment */}
                             {contact.email && (
                               <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                                 <Mail className="h-3 w-3" />
@@ -513,15 +517,15 @@ export function ApolloSearchModal({
                                 )}
                               </div>
                             )}
-                            {/* Show email availability indicator if not enriched */}
-                            {!contact.email && contact.has_email && (
+                            {/* Show "Email available" placeholder only before enrichment */}
+                            {!contact.email && !contact.enriched && contact.has_email && (
                               <span className="flex items-center gap-1 text-gray-400 dark:text-gray-500 text-xs">
                                 <Mail className="h-3 w-3" />
                                 Email available
                               </span>
                             )}
 
-                            {/* Show phone if enriched */}
+                            {/* Show actual phone number if returned by enrichment */}
                             {contact.phone && (
                               <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                                 <Phone className="h-3 w-3" />
@@ -542,8 +546,8 @@ export function ApolloSearchModal({
                                 )}
                               </div>
                             )}
-                            {/* Show phone availability indicator if not enriched */}
-                            {!contact.phone && contact.has_direct_phone && (
+                            {/* Show "Phone available" placeholder only before enrichment */}
+                            {!contact.phone && !contact.enriched && contact.has_direct_phone && (
                               <span className="flex items-center gap-1 text-gray-400 dark:text-gray-500 text-xs">
                                 <Phone className="h-3 w-3" />
                                 Phone available
@@ -575,7 +579,6 @@ export function ApolloSearchModal({
 
                         {!isExisting && !isSaved && (
                           <div className="flex items-center gap-2">
-                            {/* Enrich button - shows if not yet enriched */}
                             {/* Enrich button - show if not yet enriched and Apollo has data available */}
                             {!contact.enriched && (contact.has_email || contact.has_direct_phone) && (
                               <button

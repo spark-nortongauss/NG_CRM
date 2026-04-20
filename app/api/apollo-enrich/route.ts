@@ -11,7 +11,13 @@ interface ApolloEnrichResponse {
     title: string | null;
     headline: string | null;
     linkedin_url: string | null;
+    // Top-level phone fields
     phone?: string | null;
+    mobile_phone?: string | null;
+    corporate_phone?: string | null;
+    direct_phone?: string | null;
+    sanitized_phone?: string | null;
+    // phone_numbers array — Apollo returns phone data here after reveal
     phone_numbers?: Array<{
       raw_number?: string | null;
       sanitized_number?: string | null;
@@ -19,8 +25,6 @@ interface ApolloEnrichResponse {
       value?: string | null;
       type?: string | null;
     }>;
-    mobile_phone?: string | null;
-    corporate_phone?: string | null;
     personal_emails?: string[];
     organization?: {
       name: string | null;
@@ -32,6 +36,8 @@ interface ApolloEnrichResponse {
   } | null;
 }
 
+// Matches literal placeholder strings Apollo uses before a phone is revealed.
+// Does NOT match real phone numbers.
 const PHONE_PLACEHOLDER_PATTERN = /(phone|number)\s+available/i;
 
 function normalizePhone(value: unknown): string | null {
@@ -45,7 +51,8 @@ function normalizePhone(value: unknown): string | null {
 function extractPhone(person: ApolloEnrichResponse["person"]): string | null {
   if (!person) return null;
 
-  if (Array.isArray(person.phone_numbers)) {
+  // 1. Prefer the phone_numbers array — this is where Apollo puts revealed phones
+  if (Array.isArray(person.phone_numbers) && person.phone_numbers.length > 0) {
     for (const item of person.phone_numbers) {
       const candidate =
         normalizePhone(item?.sanitized_number) ||
@@ -56,8 +63,11 @@ function extractPhone(person: ApolloEnrichResponse["person"]): string | null {
     }
   }
 
+  // 2. Fall back to top-level phone fields in priority order
   return (
+    normalizePhone(person.sanitized_phone) ||
     normalizePhone(person.mobile_phone) ||
+    normalizePhone(person.direct_phone) ||
     normalizePhone(person.corporate_phone) ||
     normalizePhone(person.phone)
   );
@@ -246,6 +256,16 @@ export async function POST(request: NextRequest) {
 
     let person = data.person;
 
+    // Log all phone-related fields so we can see exactly what Apollo returned
+    console.log("Apollo phone fields for", person.name, ":", JSON.stringify({
+      phone: person.phone,
+      mobile_phone: person.mobile_phone,
+      direct_phone: person.direct_phone,
+      corporate_phone: person.corporate_phone,
+      sanitized_phone: person.sanitized_phone,
+      phone_numbers: person.phone_numbers,
+    }, null, 2));
+
     // Extract email from available sources
     const email = person.email || 
       (person.personal_emails && person.personal_emails.length > 0 ? person.personal_emails[0] : null);
@@ -277,6 +297,17 @@ export async function POST(request: NextRequest) {
         if (!followUpData.person) continue;
 
         person = followUpData.person;
+
+        // Log follow-up phone fields too
+        console.log(`Apollo follow-up phone fields (attempt ${attempt + 1}):`, JSON.stringify({
+          phone: person.phone,
+          mobile_phone: person.mobile_phone,
+          direct_phone: person.direct_phone,
+          corporate_phone: person.corporate_phone,
+          sanitized_phone: person.sanitized_phone,
+          phone_numbers: person.phone_numbers,
+        }, null, 2));
+
         phone = extractPhone(person);
       }
     }
