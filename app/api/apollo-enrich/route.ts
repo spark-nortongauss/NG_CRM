@@ -11,10 +11,13 @@ interface ApolloEnrichResponse {
     title: string | null;
     headline: string | null;
     linkedin_url: string | null;
+    phone?: string | null;
     phone_numbers?: Array<{
-      raw_number: string;
-      sanitized_number: string;
-      type: string;
+      raw_number?: string | null;
+      sanitized_number?: string | null;
+      number?: string | null;
+      value?: string | null;
+      type?: string | null;
     }>;
     mobile_phone?: string | null;
     corporate_phone?: string | null;
@@ -27,6 +30,41 @@ interface ApolloEnrichResponse {
     state: string | null;
     country: string | null;
   } | null;
+}
+
+const PHONE_PLACEHOLDER_PATTERN = /(phone|number)\s+available/i;
+
+function normalizePhone(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (PHONE_PLACEHOLDER_PATTERN.test(trimmed)) return null;
+  return trimmed;
+}
+
+function extractPhone(person: ApolloEnrichResponse["person"]): string | null {
+  if (!person) return null;
+
+  if (Array.isArray(person.phone_numbers)) {
+    for (const item of person.phone_numbers) {
+      const candidate =
+        normalizePhone(item?.sanitized_number) ||
+        normalizePhone(item?.raw_number) ||
+        normalizePhone(item?.number) ||
+        normalizePhone(item?.value);
+      if (candidate) return candidate;
+    }
+  }
+
+  return (
+    normalizePhone(person.mobile_phone) ||
+    normalizePhone(person.corporate_phone) ||
+    normalizePhone(person.phone)
+  );
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function getApolloWebhookUrl(): string | null {
@@ -206,19 +244,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const person = data.person;
+    let person = data.person;
 
     // Extract email from available sources
     const email = person.email || 
       (person.personal_emails && person.personal_emails.length > 0 ? person.personal_emails[0] : null);
 
-    // Extract phone from available sources  
-    const phone = 
-      (person.phone_numbers && person.phone_numbers.length > 0
-        ? person.phone_numbers[0].sanitized_number || person.phone_numbers[0].raw_number
-        : null) ||
-      person.mobile_phone ||
-      person.corporate_phone;
+    // Phone reveal can arrive slightly later; poll briefly to capture it before responding.
+    let phone = extractPhone(person);
+    if (!phone && shouldRequestPhoneReveal && apolloId) {
+      const followUpUrl = new URL("https://api.apollo.io/api/v1/people/match");
+      followUpUrl.searchParams.set("reveal_personal_emails", "true");
+
+      const followUpBody = JSON.stringify({ id: apolloId });
+
+      for (let attempt = 0; attempt < 2 && !phone; attempt++) {
+        await sleep(1200);
+
+        const followUpResponse = await fetch(followUpUrl.toString(), {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            "x-api-key": apiKey,
+          },
+          body: followUpBody,
+        });
+
+        if (!followUpResponse.ok) continue;
+        const followUpData: ApolloEnrichResponse = await followUpResponse.json();
+        if (!followUpData.person) continue;
+
+        person = followUpData.person;
+        phone = extractPhone(person);
+      }
+    }
 
     const normalizedName = deriveNameParts(person.first_name, person.last_name, person.name);
 
