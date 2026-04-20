@@ -33,12 +33,15 @@ interface TransformedContact {
   id: string;
   first_name: string | null;
   last_name_obfuscated: string | null; // Partial last name from search API
+  last_name?: string | null;
+  full_name?: string | null;
   job_title: string | null;
   organization_name: string | null;
   organization_website: string | null;
   has_email: boolean;
   has_direct_phone: boolean;
   last_refreshed_at: string | null;
+  linkedin_url?: string | null;
 }
 
 function extractDomain(url: string): string {
@@ -53,6 +56,45 @@ function extractDomain(url: string): string {
     } catch {
       return url;
     }
+  }
+}
+
+async function fetchApolloFullNameById(
+  apiKey: string,
+  personId: string
+): Promise<{ first_name: string | null; last_name: string | null; full_name: string | null; linkedin_url: string | null } | null> {
+  try {
+    const response = await fetch("https://api.apollo.io/api/v1/people/match", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache",
+        accept: "application/json",
+        "x-api-key": apiKey,
+      },
+      body: JSON.stringify({ id: personId }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const person = data?.person;
+    if (!person) return null;
+
+    const normalizedFullName = typeof person.name === "string" ? person.name.trim() : null;
+    const normalizedFirstName =
+      typeof person.first_name === "string" ? person.first_name.trim() || null : null;
+    const normalizedLastName =
+      typeof person.last_name === "string" ? person.last_name.trim() || null : null;
+
+    return {
+      first_name: normalizedFirstName,
+      last_name: normalizedLastName,
+      full_name: normalizedFullName || null,
+      linkedin_url: typeof person.linkedin_url === "string" ? person.linkedin_url : null,
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -199,6 +241,23 @@ export async function POST(
       })
     );
 
+    // Apollo People Search always obfuscates last_name (e.g. Ho***y).
+    // Hydrate names with a follow-up People Match lookup by id so UI can show full names.
+    const hydratedContacts = await Promise.all(
+      transformedContacts.map(async (contact) => {
+        const fullNameData = await fetchApolloFullNameById(apiKey, contact.id);
+        if (!fullNameData) return contact;
+
+        return {
+          ...contact,
+          first_name: fullNameData.first_name || contact.first_name,
+          last_name: fullNameData.last_name || null,
+          full_name: fullNameData.full_name || null,
+          linkedin_url: fullNameData.linkedin_url || null,
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
       organization: {
@@ -208,10 +267,10 @@ export async function POST(
         hasEmail: !!organization.primary_email,
         hasPhone: !!organization.primary_phone_e164,
       },
-      contacts: transformedContacts,
+      contacts: hydratedContacts,
       total_entries: apolloData.total_entries,
       domain,
-      note: "People Search API returns limited info. Use Apollo Enrichment to get full contact details (email, phone, LinkedIn).",
+      note: "People Search API is name-hydrated using Apollo Match by person id. Use Apollo Enrichment to get email and phone details.",
     });
   } catch (error) {
     console.error("Apollo search error:", error);

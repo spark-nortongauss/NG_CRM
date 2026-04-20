@@ -22,12 +22,14 @@ interface ApolloContact {
   id: string;
   first_name: string | null;
   last_name_obfuscated: string | null; // Partial last name from search (e.g., "Zh***g")
+  full_name?: string | null;
   job_title: string | null;
   organization_name: string | null;
   organization_website: string | null;
   has_email: boolean; // Indicates if Apollo has email available
   has_direct_phone: boolean; // Indicates if Apollo has phone available
   last_refreshed_at: string | null;
+  linkedin_url?: string | null;
   // Fields populated after enrichment
   last_name?: string | null;
   email?: string | null;
@@ -124,7 +126,11 @@ export function ApolloSearchModal({
       const enrichData = await enrichResponse.json();
 
       if (!enrichResponse.ok) {
-        throw new Error(enrichData.error || "Failed to enrich contact");
+        const extraDetails =
+          typeof enrichData.details === "string" && enrichData.details.trim().length > 0
+            ? ` (${enrichData.details})`
+            : "";
+        throw new Error((enrichData.error || "Failed to enrich contact") + extraDetails);
       }
 
       if (enrichData.success && enrichData.contact) {
@@ -134,8 +140,10 @@ export function ApolloSearchModal({
             c.id === contact.id
               ? {
                   ...c,
+                  full_name: enrichData.contact.full_name || c.full_name,
                   // Get full last name from enrichment
                   last_name: enrichData.contact.last_name || c.last_name,
+                  first_name: enrichData.contact.first_name || c.first_name,
                   email: enrichData.contact.email || c.email,
                   phone: enrichData.contact.phone || c.phone,
                   linkedin_url: enrichData.contact.linkedin_url || c.linkedin_url,
@@ -166,8 +174,11 @@ export function ApolloSearchModal({
     setSavingItems((prev) => new Set(prev).add(itemKey));
 
     try {
-      // Use enriched last_name if available, otherwise use obfuscated version
-      const lastName = contact.last_name || contact.last_name_obfuscated;
+      // Avoid saving obfuscated last names (e.g. "Ho***y") into CRM records.
+      const obfuscatedLastName = contact.last_name_obfuscated?.includes("*")
+        ? null
+        : contact.last_name_obfuscated;
+      const lastName = contact.last_name || obfuscatedLastName;
       
       const response = await fetch("/api/contacts", {
         method: "POST",
@@ -430,10 +441,11 @@ export function ApolloSearchModal({
                   const isSaved = savedItems.has(itemKey);
                   const isExisting = contact.alreadyExists;
                   // Use full last_name if enriched, otherwise use obfuscated version
-                  const lastName = contact.last_name || contact.last_name_obfuscated;
-                  const fullName = [contact.first_name, lastName]
-                    .filter(Boolean)
-                    .join(" ") || "Unknown";
+                  const fallbackLastName = contact.last_name || contact.last_name_obfuscated;
+                  const fullName =
+                    contact.full_name ||
+                    [contact.first_name, fallbackLastName].filter(Boolean).join(" ") ||
+                    "Unknown";
 
                   return (
                     <div

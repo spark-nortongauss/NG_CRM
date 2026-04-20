@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useState, use, useCallback, useRef } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Save, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Save,
+  CheckCircle2,
+  ShieldCheck,
+  AlertTriangle,
+  XCircle,
+  HelpCircle,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import dynamic from "next/dynamic";
 import "react-quill-new/dist/quill.snow.css";
@@ -47,6 +56,26 @@ interface Contact {
   [key: string]: any;
 }
 
+interface ContactVerificationReport {
+  checked_email_field: "email_1" | "email_2" | "email_3";
+  checked_at: string;
+  final_signal: "OUTREACH_READY" | "RISKY" | "DO_NOT_CONTACT";
+  final_reason: string;
+  domain_check?: {
+    signal?: string;
+    reason?: string;
+  };
+  email_check?: {
+    signal?: string;
+    reason?: string;
+    provider?: string;
+  };
+  linkedin_check?: {
+    signal?: string;
+    reason?: string;
+  } | null;
+}
+
 export default function ContactDetailPage({
   params,
 }: {
@@ -58,6 +87,15 @@ export default function ContactDetailPage({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingField, setSavingField] = useState<string | null>(null);
+  const [verifyModalOpen, setVerifyModalOpen] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [verifyEmailField, setVerifyEmailField] = useState<
+    "email_1" | "email_2" | "email_3" | null
+  >(null);
+  const [verifyReport, setVerifyReport] = useState<ContactVerificationReport | null>(
+    null,
+  );
 
   useEffect(() => {
     fetchContact();
@@ -216,6 +254,128 @@ export default function ContactDetailPage({
     "CallbackScheduled",
     "DoNotCall",
   ] as const;
+
+  const getSignalStyle = (
+    signal: "OUTREACH_READY" | "RISKY" | "DO_NOT_CONTACT" | undefined,
+  ) => {
+    if (signal === "OUTREACH_READY") {
+      return {
+        text: "OUTREACH_READY",
+        className:
+          "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+        icon: <ShieldCheck className="h-3.5 w-3.5" />,
+      };
+    }
+    if (signal === "DO_NOT_CONTACT") {
+      return {
+        text: "DO_NOT_CONTACT",
+        className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+        icon: <XCircle className="h-3.5 w-3.5" />,
+      };
+    }
+    if (signal === "RISKY") {
+      return {
+        text: "RISKY",
+        className:
+          "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+        icon: <AlertTriangle className="h-3.5 w-3.5" />,
+      };
+    }
+    return {
+      text: "UNKNOWN",
+      className: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+      icon: <HelpCircle className="h-3.5 w-3.5" />,
+    };
+  };
+
+  const handleVerifyEmail = async (field: "email_1" | "email_2" | "email_3") => {
+    if (!contact) return;
+    const emailValue = contact[field]?.trim();
+    if (!emailValue) return;
+
+    setVerifyModalOpen(true);
+    setVerifyLoading(true);
+    setVerifyError(null);
+    setVerifyReport(null);
+    setVerifyEmailField(field);
+
+    try {
+      const response = await fetch(`/api/contacts/${id}/verify-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailField: field }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to verify email");
+      }
+
+      const report = data.report as ContactVerificationReport;
+      setVerifyReport(report);
+    } catch (err) {
+      setVerifyError(err instanceof Error ? err.message : "Verification failed");
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const EmailFieldWithVerify = ({
+    label,
+    field,
+  }: {
+    label: string;
+    field: "email_1" | "email_2" | "email_3";
+  }) => {
+    const [localValue, setLocalValue] = useState(contact?.[field]?.toString() || "");
+    const hasValue = localValue.trim().length > 0;
+
+    useEffect(() => {
+      setLocalValue(contact?.[field]?.toString() || "");
+    }, [contact, field]);
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.currentTarget.blur();
+        handleUpdate(field, localValue);
+      }
+    };
+
+    return (
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          {label}
+        </label>
+        <div className="space-y-2">
+          <div className="relative">
+            <Input
+              value={localValue}
+              onChange={(e) => setLocalValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={() => handleUpdate(field, localValue)}
+              placeholder="-"
+              type="email"
+              className="pr-28 transition-colors focus:bg-blue-50/50 dark:focus:bg-ng-dark-hover"
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {hasValue ? (
+                <button
+                  type="button"
+                  onClick={() => handleVerifyEmail(field)}
+                  className="rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+                >
+                  Verify
+                </button>
+              ) : null}
+              {savingField === field ? (
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // ─── Phone + Call Status ──────────────────────────────────────────
   const PhoneNumberWithCallStatus = ({
@@ -532,9 +692,9 @@ export default function ContactDetailPage({
               Email Addresses
             </h3>
             <div className="space-y-4">
-              <EditableField label="Email 1" field="email_1" type="email" />
-              <EditableField label="Email 2" field="email_2" type="email" />
-              <EditableField label="Email 3" field="email_3" type="email" />
+              <EmailFieldWithVerify label="Email 1" field="email_1" />
+              <EmailFieldWithVerify label="Email 2" field="email_2" />
+              <EmailFieldWithVerify label="Email 3" field="email_3" />
             </div>
           </section>
 
@@ -602,6 +762,82 @@ export default function ContactDetailPage({
           <NotesEditor />
         </section>
       </div>
+
+      {verifyModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-lg bg-white dark:bg-ng-dark-card shadow-xl border border-gray-200 dark:border-ng-dark-elevated p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Email Verification
+            </h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {verifyEmailField ? `Checking ${contact?.[verifyEmailField] ?? ""}` : ""}
+            </p>
+
+            {verifyLoading ? (
+              <div className="mt-6 flex flex-col items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
+                  Running domain, mailbox, and profile checks...
+                </p>
+              </div>
+            ) : verifyError ? (
+              <div className="mt-5 rounded-md border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-900/30 p-4">
+                <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                  Verification failed
+                </p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {verifyError}
+                </p>
+              </div>
+            ) : verifyReport ? (
+              <div className="mt-5 space-y-3 text-sm">
+                <div
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-semibold ${
+                    getSignalStyle(verifyReport.final_signal).className
+                  }`}
+                >
+                  {getSignalStyle(verifyReport.final_signal).icon}
+                  {getSignalStyle(verifyReport.final_signal).text}
+                </div>
+                <p className="text-gray-700 dark:text-gray-200">
+                  {verifyReport.final_reason}
+                </p>
+                <div className="rounded-md bg-gray-50 dark:bg-ng-dark-bg p-3 space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                  <p>
+                    Domain: {verifyReport.domain_check?.signal ?? "unknown"} -{" "}
+                    {verifyReport.domain_check?.reason ?? "-"}
+                  </p>
+                  <p>
+                    Email: {verifyReport.email_check?.signal ?? "unknown"} -{" "}
+                    {verifyReport.email_check?.reason ?? "-"}
+                  </p>
+                  <p>
+                    LinkedIn: {verifyReport.linkedin_check?.signal ?? "unknown"} -{" "}
+                    {verifyReport.linkedin_check?.reason ?? "-"}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  if (verifyLoading) return;
+                  setVerifyModalOpen(false);
+                  setVerifyError(null);
+                  setVerifyReport(null);
+                  setVerifyEmailField(null);
+                }}
+                disabled={verifyLoading}
+                className="rounded-md border border-gray-300 dark:border-ng-dark-elevated px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-ng-dark-hover disabled:opacity-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }
