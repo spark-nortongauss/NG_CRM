@@ -29,7 +29,6 @@ interface ApolloContact {
   has_email: boolean; // Indicates if Apollo has email available
   has_direct_phone: boolean; // Indicates if Apollo has phone available
   last_refreshed_at: string | null;
-  linkedin_url?: string | null;
   // Fields populated after enrichment
   last_name?: string | null;
   email?: string | null;
