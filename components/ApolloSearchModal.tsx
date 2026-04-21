@@ -38,6 +38,7 @@ interface ApolloContact {
   state?: string | null;
   country?: string | null;
   enriched?: boolean;
+  phonePolling?: boolean;
   alreadyExists?: boolean;
 }
 
@@ -71,6 +72,38 @@ export function ApolloSearchModal({
   const [savedItems, setSavedItems] = useState<Set<string>>(new Set());
   const [enrichingItems, setEnrichingItems] = useState<Set<string>>(new Set());
   const [domain, setDomain] = useState<string>("");
+
+  const pollForPhone = async (apolloId: string) => {
+    const maxAttempts = 18; // ~3 minutes total
+    const intervalMs = 10_000;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+
+      try {
+        const response = await fetch(
+          `/api/apollo-phone-poll?apolloId=${encodeURIComponent(apolloId)}`
+        );
+        if (!response.ok) continue;
+
+        const data = await response.json();
+        if (data.phone && typeof data.phone === "string") {
+          setContacts((prev) =>
+            prev.map((c) =>
+              c.id === apolloId ? { ...c, phone: data.phone, phonePolling: false } : c
+            )
+          );
+          return;
+        }
+      } catch (error) {
+        console.error("Apollo phone poll error:", error);
+      }
+    }
+
+    setContacts((prev) =>
+      prev.map((c) => (c.id === apolloId ? { ...c, phonePolling: false } : c))
+    );
+  };
 
   const handleSearch = async () => {
     setIsSearching(true);
@@ -133,6 +166,7 @@ export function ApolloSearchModal({
       }
 
       if (enrichData.success && enrichData.contact) {
+        const shouldPollPhone = !enrichData.contact.phone;
         setContacts((prev) =>
           prev.map((c) =>
             c.id === contact.id
@@ -154,10 +188,15 @@ export function ApolloSearchModal({
                   has_email: false,
                   has_direct_phone: false,
                   enriched: true,
+                  phonePolling: shouldPollPhone,
                 }
               : c
           )
         );
+
+        if (shouldPollPhone) {
+          void pollForPhone(contact.id);
+        }
       }
     } catch (err) {
       console.error("Error enriching contact:", err);
@@ -554,7 +593,13 @@ export function ApolloSearchModal({
                               </span>
                             )}
                             {/* Show "No phone found" if enriched but still null */}
-                            {!contact.phone && contact.enriched && (
+                            {!contact.phone && contact.enriched && contact.phonePolling && (
+                              <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs italic">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Waiting for Apollo phone reveal...
+                              </span>
+                            )}
+                            {!contact.phone && contact.enriched && !contact.phonePolling && (
                               <span className="flex items-center gap-1 text-gray-400 dark:text-gray-500 text-xs italic">
                                 <Phone className="h-3 w-3" />
                                 No phone found

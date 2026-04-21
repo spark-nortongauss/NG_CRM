@@ -73,10 +73,6 @@ function extractPhone(person: ApolloEnrichResponse["person"]): string | null {
   );
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function getApolloWebhookUrl(): string | null {
   const webhookUrl = process.env.APOLLO_WEBHOOK_URL?.trim();
   if (!webhookUrl) return null;
@@ -254,7 +250,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let person = data.person;
+    const person = data.person;
 
     // Log all phone-related fields so we can see exactly what Apollo returned
     console.log("Apollo phone fields for", person.name, ":", JSON.stringify({
@@ -270,60 +266,8 @@ export async function POST(request: NextRequest) {
     const email = person.email || 
       (person.personal_emails && person.personal_emails.length > 0 ? person.personal_emails[0] : null);
 
-    // Phone reveal can arrive slightly later; poll briefly to capture it before responding.
-    let phone = extractPhone(person);
-    if (!phone && shouldRequestPhoneReveal && apolloId) {
-      console.log(`Phone not immediately available for ${person.name}. Starting polling...`);
-      const followUpUrl = new URL("https://api.apollo.io/api/v1/people/match");
-      followUpUrl.searchParams.set("reveal_personal_emails", "true");
-      followUpUrl.searchParams.set("reveal_phone_number", "true");
-      if (webhookUrl) {
-        followUpUrl.searchParams.set("webhook_url", webhookUrl);
-      }
-
-      const followUpBody = JSON.stringify({ id: apolloId });
-
-      // Increase attempts to 8 and sleep to 2000ms for a ~16s window.
-      // Phone reveal typically takes 5-15 seconds.
-      for (let attempt = 0; attempt < 8 && !phone; attempt++) {
-        await sleep(2000);
-        console.log(`Polling Apollo for phone (attempt ${attempt + 1})...`);
-
-        const followUpResponse = await fetch(followUpUrl.toString(), {
-          method: "POST",
-          headers: {
-            accept: "application/json",
-            "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
-            "x-api-key": apiKey,
-          },
-          body: followUpBody,
-        });
-
-        if (!followUpResponse.ok) {
-          console.error(`Follow-up polling failed (status ${followUpResponse.status})`);
-          continue;
-        }
-        
-        const followUpData: ApolloEnrichResponse = await followUpResponse.json();
-        if (!followUpData.person) continue;
-
-        person = followUpData.person;
-
-        // Log follow-up phone fields
-        console.log(`Apollo follow-up fields (attempt ${attempt + 1}) for ${person.name}:`, JSON.stringify({
-          phone: person.phone,
-          mobile_phone: person.mobile_phone,
-          direct_phone: person.direct_phone,
-          phone_numbers: person.phone_numbers,
-        }, null, 2));
-
-        phone = extractPhone(person);
-        if (phone) {
-          console.log(`Phone found for ${person.name} on attempt ${attempt + 1}: ${phone}`);
-        }
-      }
-    }
+    // Apollo phone reveal is asynchronous and delivered via webhook.
+    const phone = extractPhone(person);
 
     const normalizedName = deriveNameParts(person.first_name, person.last_name, person.name);
 
