@@ -46,6 +46,8 @@ export default function LoginPage() {
     if (result?.error) {
       setError(result.error);
       setLoading(false);
+    } else if (result?.success) {
+      window.location.href = "/home";
     }
   }
 

@@ -29,8 +29,7 @@ export async function signIn(formData: FormData) {
     return { error: "Authentication failed" };
   }
 
-  revalidatePath("/", "layout");
-  redirect("/home");
+  return { success: true };
 }
 
 export async function signOut() {
