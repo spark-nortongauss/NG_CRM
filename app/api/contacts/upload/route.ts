@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/server";
+import { buildContactDedupeKey } from "@/lib/contacts/dedupe-key";
 
 /**
  * Sanitize text content to remove problematic characters that PostgreSQL can't handle.
@@ -69,6 +70,7 @@ interface ContactRecord {
     cold_call_status: string;
     cold_email_status: string;
     contacted: boolean;
+    dedupe_key: string;
 }
 
 function normalizeHeader(header: string): string {
@@ -197,12 +199,6 @@ export async function POST(request: NextRequest) {
         // Initialize Supabase client
         const supabase = await createClient();
 
-        // Helper function to create a unique key for duplicate detection
-        // Based on: First Name, Last Name, Organization, and Job Title
-        const createDuplicateKey = (firstName: string, lastName: string, organization: string, jobTitle: string): string => {
-            return `${firstName.toLowerCase().trim()}|${lastName.toLowerCase().trim()}|${organization.toLowerCase().trim()}|${jobTitle.toLowerCase().trim()}`;
-        };
-
         // Transform rows to contact records first
         const allContacts: Array<{ contact: ContactRecord; duplicateKey: string; rowIndex: number }> = [];
         const errors: Array<{ row: number; error: string }> = [];
@@ -229,7 +225,12 @@ export async function POST(request: NextRequest) {
             }
 
             // Create duplicate key based on First Name, Last Name, Organization, Job Title
-            const duplicateKey = createDuplicateKey(firstName, lastName, organization, jobTitle);
+            const duplicateKey = buildContactDedupeKey({
+                first_name: firstName,
+                last_name: lastName,
+                organization,
+                job_title: jobTitle,
+            });
 
             // Map contacted field
             const contactedValue = getRowValue(rowLower, ["Contacted", "Has Been Contacted"]).toLowerCase();
@@ -295,6 +296,7 @@ export async function POST(request: NextRequest) {
                 cold_call_status: coldCallStatus,
                 cold_email_status: coldEmailStatus,
                 contacted: contacted,
+                dedupe_key: duplicateKey,
             };
 
             allContacts.push({ contact, duplicateKey, rowIndex: index });
@@ -312,70 +314,29 @@ export async function POST(request: NextRequest) {
         const indicesToKeep = new Set(seenContactKeys.values());
         const deduplicatedContacts = allContacts.filter((_, index) => indicesToKeep.has(index));
 
-        // Get existing contacts for duplicate checking based on first_name, last_name, organization, job_title
-        const { data: existingContacts } = await supabase
-            .from("contacts")
-            .select("id, first_name, last_name, organization, job_title");
-
-        // Find which uploaded contacts have duplicates in the database
-        const duplicatesUpdated: Array<{ firstName: string; lastName: string; organization: string; jobTitle: string }> = [];
-        const contactIdsToDelete: string[] = [];
-
-        if (existingContacts && existingContacts.length > 0) {
-            // Create a map of duplicate key -> contact id for existing records
-            const existingContactMap = new Map<string, string>();
-            existingContacts.forEach(contact => {
-                const key = createDuplicateKey(
-                    contact.first_name || "",
-                    contact.last_name || "",
-                    contact.organization || "",
-                    contact.job_title || ""
-                );
-                existingContactMap.set(key, contact.id);
-            });
-
-            // Check each contact we want to insert
-            deduplicatedContacts.forEach(item => {
-                const existingId = existingContactMap.get(item.duplicateKey);
-                if (existingId) {
-                    contactIdsToDelete.push(existingId);
-                    duplicatesUpdated.push({
-                        firstName: item.contact.first_name,
-                        lastName: item.contact.last_name,
-                        organization: item.contact.organization,
-                        jobTitle: item.contact.job_title,
-                    });
-                }
-            });
-
-            // Delete the old contact records that will be replaced
-            if (contactIdsToDelete.length > 0) {
-                const { error: deleteError } = await supabase
-                    .from("contacts")
-                    .delete()
-                    .in("id", contactIdsToDelete);
-
-                if (deleteError) {
-                    console.error("Error deleting duplicate contacts:", deleteError);
-                    return NextResponse.json(
-                        {
-                            error: "Failed to update duplicate contacts",
-                            details: deleteError.message
-                        },
-                        { status: 500 }
-                    );
-                }
-            }
-        }
-
-        // Insert all contacts (both new and updated)
+        // Upsert all contacts in one DB operation.
+        // This eliminates delete-before-insert data loss risk.
         const contactsToInsert = deduplicatedContacts.map(item => item.contact);
         let insertedCount = 0;
+        let updatedCount = 0;
         
         if (contactsToInsert.length > 0) {
+            const dedupeKeys = contactsToInsert.map((c) => c.dedupe_key);
+            const { data: preExisting } = await supabase
+                .from("contacts")
+                .select("dedupe_key")
+                .in("dedupe_key", dedupeKeys);
+
+            const existingKeySet = new Set(
+                (preExisting || [])
+                    .map((row) => row.dedupe_key)
+                    .filter((v): v is string => !!v)
+            );
+            updatedCount = contactsToInsert.filter((c) => existingKeySet.has(c.dedupe_key)).length;
+
             const { data, error } = await supabase
                 .from("contacts")
-                .insert(contactsToInsert)
+                .upsert(contactsToInsert, { onConflict: "dedupe_key" })
                 .select();
 
             if (error) {
@@ -392,12 +353,7 @@ export async function POST(request: NextRequest) {
             insertedCount = data?.length || 0;
         }
 
-        // Format updated info for response
-        const updatedInfo = duplicatesUpdated.map(d => 
-            `${d.firstName} ${d.lastName}${d.organization ? ` at ${d.organization}` : ""}${d.jobTitle ? ` (${d.jobTitle})` : ""}`
-        );
-
-        const newlyInserted = insertedCount - duplicatesUpdated.length;
+        const newlyInserted = insertedCount - updatedCount;
 
         return NextResponse.json({
             success: true,
@@ -405,11 +361,11 @@ export async function POST(request: NextRequest) {
             summary: {
                 total: rows.length,
                 inserted: newlyInserted > 0 ? newlyInserted : 0,
-                updated: duplicatesUpdated.length,
+                updated: updatedCount,
                 errors: errors.length,
             },
             details: {
-                updatedContacts: updatedInfo,
+                updatedContacts: [],
                 errors: errors,
             },
         });

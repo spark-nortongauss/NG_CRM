@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAuthenticated, requireSuperAdmin } from "@/lib/auth/role-check";
 import { buildFieldDiffs, getContactFieldLabels, logActivity } from "@/lib/activity/log";
+import { buildContactDedupeKey } from "@/lib/contacts/dedupe-key";
 
 export async function GET(
   request: NextRequest,
@@ -55,10 +56,18 @@ export async function PATCH(
       .eq("id", id)
       .single();
 
+    const mergedForDedupe = {
+      first_name: (body?.first_name ?? existingContact?.first_name) as string | null,
+      last_name: (body?.last_name ?? existingContact?.last_name) as string | null,
+      organization: (body?.organization ?? existingContact?.organization) as string | null,
+      job_title: (body?.job_title ?? existingContact?.job_title) as string | null,
+    };
+
     const { data, error } = await supabase
       .from("contacts")
       .update({
         ...body,
+        dedupe_key: buildContactDedupeKey(mergedForDedupe),
         updated_at: new Date().toISOString(),
         updated_by_user_id: auth.userId,
       })

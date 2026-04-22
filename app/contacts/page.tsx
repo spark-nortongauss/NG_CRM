@@ -44,6 +44,7 @@ interface Contact {
   contact_date: string | null;
   contacted: boolean;
   created_at: string;
+  updated_at: string;
   [key: string]: any;
 }
 
@@ -146,11 +147,14 @@ export default function ContactsPage() {
   const [sortOption, setSortOption] = useState<"" | "name" | "contacts">("");
 
   const compareStable = (a: Contact, b: Contact) => {
-    // Match backend default order: created_at asc, then id asc
+    // Match backend default order: updated_at desc, created_at desc, id desc.
+    const aUpdated = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+    const bUpdated = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+    if (aUpdated !== bUpdated) return bUpdated - aUpdated;
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
     const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-    if (aTime !== bTime) return aTime - bTime;
-    return (a.id || "").localeCompare(b.id || "");
+    if (aTime !== bTime) return bTime - aTime;
+    return (b.id || "").localeCompare(a.id || "");
   };
 
   // Compute filtered and sorted data

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity/log";
+import { buildContactDedupeKey } from "@/lib/contacts/dedupe-key";
 
 export async function POST(request: Request) {
   try {
@@ -39,33 +40,79 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data, error } = await supabase
+    const payload = {
+      first_name: first_name || null,
+      last_name: last_name || null,
+      organization: organization || null,
+      job_title: job_title || null,
+      linkedin_url: linkedin_url || null,
+      mobile_1: mobile_1 || null,
+      mobile_2: mobile_2 || null,
+      mobile_3: mobile_3 || null,
+      fixed_number: fixed_number || null,
+      email_1: email_1 || null,
+      email_2: email_2 || null,
+      email_3: email_3 || null,
+      city: city || null,
+      state: state || null,
+      country: country || null,
+      contact_status: contact_status || null,
+      contact_date: contact_date || null,
+      contacted: contacted || false,
+      dedupe_key: buildContactDedupeKey({
+        first_name,
+        last_name,
+        organization,
+        job_title,
+      }),
+    };
+
+    const { data: existing } = await supabase
       .from("contacts")
-      .insert([
-        {
-          first_name: first_name || null,
-          last_name: last_name || null,
-          organization: organization || null,
-          job_title: job_title || null,
-          linkedin_url: linkedin_url || null,
-          mobile_1: mobile_1 || null,
-          mobile_2: mobile_2 || null,
-          mobile_3: mobile_3 || null,
-          fixed_number: fixed_number || null,
-          email_1: email_1 || null,
-          email_2: email_2 || null,
-          email_3: email_3 || null,
-          city: city || null,
-          state: state || null,
-          country: country || null,
-          contact_status: contact_status || null,
-          contact_date: contact_date || null,
-          contacted: contacted || false,
-          created_by_user_id: actor?.id ?? null,
+      .select("id")
+      .eq("dedupe_key", payload.dedupe_key)
+      .maybeSingle();
+
+    let data: any[] | null = null;
+    let error: { message?: string } | null = null;
+
+    if (existing?.id) {
+      const result = await supabase
+        .from("contacts")
+        .update({
+          ...payload,
+          updated_at: new Date().toISOString(),
           updated_by_user_id: actor?.id ?? null,
-        },
-      ])
-      .select();
+        })
+        .eq("id", existing.id)
+        .select();
+      data = result.data;
+      error = result.error;
+    } else {
+      let result = await supabase
+        .from("contacts")
+        .insert([
+          {
+            ...payload,
+            created_by_user_id: actor?.id ?? null,
+            updated_by_user_id: actor?.id ?? null,
+          },
+        ])
+        .select();
+      if (result.error && (result.error as { code?: string }).code === "23505") {
+        result = await supabase
+          .from("contacts")
+          .update({
+            ...payload,
+            updated_at: new Date().toISOString(),
+            updated_by_user_id: actor?.id ?? null,
+          })
+          .eq("dedupe_key", payload.dedupe_key)
+          .select();
+      }
+      data = result.data;
+      error = result.error;
+    }
 
     if (error) {
       console.error("Supabase error:", error);
@@ -131,9 +178,9 @@ export async function GET(req: NextRequest) {
     const { data, count, error } = await supabase
       .from("contacts")
       .select("*", { count: "exact" })
-      .order("created_at", { ascending: true })
-      // Tie-breaker for deterministic ordering (bulk inserts often share the same created_at)
-      .order("id", { ascending: true })
+      .order("updated_at", { ascending: false })
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .range(offset, offset + safeLimit - 1);
 
     if (error) {
