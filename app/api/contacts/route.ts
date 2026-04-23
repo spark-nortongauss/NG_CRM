@@ -178,7 +178,6 @@ export async function GET(req: NextRequest) {
     const { data, count, error } = await supabase
       .from("contacts")
       .select("*", { count: "exact" })
-      .order("updated_at", { ascending: false })
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .range(offset, offset + safeLimit - 1);
