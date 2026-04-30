@@ -12,6 +12,7 @@ export async function POST(request: Request) {
       first_name,
       last_name,
       organization,
+      organization_id,
       job_title,
       linkedin_url,
       mobile_1,
@@ -73,7 +74,14 @@ export async function POST(request: Request) {
       .eq("dedupe_key", payload.dedupe_key)
       .maybeSingle();
 
-    let data: any[] | null = null;
+    type ContactRow = {
+      id: string;
+      contact_status?: string | null;
+      contacted?: boolean | null;
+      organization?: string | null;
+    };
+
+    let data: ContactRow[] | null = null;
     let error: { message?: string } | null = null;
 
     if (existing?.id) {
@@ -123,6 +131,28 @@ export async function POST(request: Request) {
     }
 
     const created = Array.isArray(data) ? data[0] : null;
+
+    // If an organization_id was provided, link this contact to the organization.
+    // This is the canonical way to fetch org contacts (prevents cross-company mixing).
+    if (created?.id && typeof organization_id === "string" && organization_id.trim()) {
+      const linkResult = await supabase
+        .from("organization_contacts")
+        .upsert(
+          [
+            {
+              org_id: organization_id.trim(),
+              contact_id: created.id,
+              relationship_type: "Primary",
+            },
+          ],
+          { onConflict: "org_id,contact_id,relationship_type" }
+        );
+
+      if (linkResult.error) {
+        console.error("Failed to link contact to organization:", linkResult.error);
+      }
+    }
+
     if (created?.id) {
       const statusToChannel =
         typeof created.contact_status === "string"

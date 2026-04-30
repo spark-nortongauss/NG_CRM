@@ -257,6 +257,7 @@ export function WebsiteScanModal({
           first_name: "Contact",
           last_name: `from ${organizationName}`,
           organization: organizationName,
+          organization_id: organizationId,
           email_1: email || null,
           fixed_number: phone || null,
         }),

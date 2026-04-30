@@ -229,6 +229,7 @@ export function ApolloSearchModal({
           first_name: contact.first_name || null,
           last_name: lastName || null,
           organization: organizationName,
+          organization_id: organizationId,
           job_title: contact.job_title || null,
           linkedin_url: contact.linkedin_url || null,
           email_1: contact.email || null,

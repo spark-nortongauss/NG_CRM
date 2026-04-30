@@ -13,6 +13,7 @@ import {
     ChevronDown,
     LogOut,
     Settings,
+    Globe,
     X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -178,6 +179,22 @@ export function Sidebar() {
                         <span className="font-medium text-sm truncate">Task Board</span>
                     </Link>
                 </div>
+
+                {/* Industry Scrapper Menu — Super Admin Only */}
+                {isSuperAdmin && (
+                    <div>
+                        <Link
+                            href="/scrapper-api"
+                            className={cn(
+                                "flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-white/10 group w-full",
+                                isActive("/scrapper-api") ? "bg-white/10 text-ng-yellow" : "text-white"
+                            )}
+                        >
+                            <Globe className="h-5 w-5 shrink-0" />
+                            <span className="font-medium text-sm truncate">Industry Scrapper</span>
+                        </Link>
+                    </div>
+                )}
 
                 {/* User Settings Menu — Super Admin Only */}
                 {isSuperAdmin && (
