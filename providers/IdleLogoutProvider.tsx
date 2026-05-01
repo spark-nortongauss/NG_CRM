@@ -7,6 +7,12 @@ import { signOut } from "@/app/actions/auth";
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 const WARNING_BEFORE_MS = 60 * 1000; // Show warning 1 minute before logout
 
+// Routes where auto-logout is disabled (e.g. long-running background jobs).
+// Add paths here to exempt them from the idle timer.
+const IDLE_EXEMPT_ROUTES: string[] = [
+    "/scrapper-api",
+];
+
 interface IdleLogoutProviderProps {
     children: React.ReactNode;
 }
@@ -20,8 +26,12 @@ export function IdleLogoutProvider({ children }: IdleLogoutProviderProps) {
     const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Don't track on login page
+    // Don't track on login page or exempt routes (e.g. long-running job pages)
     const isLoginPage = pathname === "/login";
+    const isExemptRoute = IDLE_EXEMPT_ROUTES.some(
+        (route) => pathname === route || pathname.startsWith(route + "/")
+    );
+    const shouldSkipIdle = isLoginPage || isExemptRoute;
 
     const clearAllTimers = useCallback(() => {
         if (timeoutRef.current) {
@@ -60,7 +70,7 @@ export function IdleLogoutProvider({ children }: IdleLogoutProviderProps) {
     }, []);
 
     const resetTimer = useCallback(() => {
-        if (isLoginPage) return;
+        if (shouldSkipIdle) return;
 
         clearAllTimers();
         setShowWarning(false);
@@ -83,7 +93,7 @@ export function IdleLogoutProvider({ children }: IdleLogoutProviderProps) {
     }, [resetTimer]);
 
     useEffect(() => {
-        if (isLoginPage) {
+        if (shouldSkipIdle) {
             clearAllTimers();
             setShowWarning(false);
             return;
@@ -124,7 +134,7 @@ export function IdleLogoutProvider({ children }: IdleLogoutProviderProps) {
             });
             clearAllTimers();
         };
-    }, [isLoginPage, resetTimer, clearAllTimers]);
+    }, [shouldSkipIdle, resetTimer, clearAllTimers]);
 
     return (
         <>

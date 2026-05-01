@@ -127,24 +127,28 @@ export default function ScrapperApiPage() {
     window.location.href = `/api/scrapper/jobs/${jobId}/download`;
   };
 
+  const isJobActive = jobStatus === "running" || jobStatus === "pending";
+
   return (
-    <div className="w-full px-6 py-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="rounded-xl border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+    <div className="w-full px-3 sm:px-6 py-4 sm:py-8">
+      <div className="mx-auto max-w-5xl space-y-4 sm:space-y-6">
+        {/* ── Header Card ── */}
+        <div className="rounded-xl border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
                 Scrapper API (Google Search → Filter → Excel)
               </h1>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                 Super-admin tool to run long searches in the background and download an Excel result when finished.
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            {/* Action buttons — stack vertically on mobile, row on sm+ */}
+            <div className="flex flex-col xs:flex-row sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
               <button
                 onClick={startJob}
-                disabled={!canRun || (jobStatus === "running" || jobStatus === "pending")}
-                className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+                disabled={!canRun || isJobActive}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 sm:py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
               >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -162,7 +166,7 @@ export default function ScrapperApiPage() {
                   jobStatus === "failed" ||
                   jobStatus === "cancelled"
                 }
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-ng-dark-elevated px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ng-dark-hover disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 dark:border-ng-dark-elevated px-4 py-2.5 sm:py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ng-dark-hover disabled:opacity-50 transition-colors"
               >
                 {isCancelling ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -174,27 +178,29 @@ export default function ScrapperApiPage() {
               <button
                 onClick={download}
                 disabled={!jobId || jobStatus !== "completed"}
-                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 sm:py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
               >
                 <Download className="h-4 w-4" />
-                Download Excel
+                <span className="whitespace-nowrap">Download Excel</span>
               </button>
             </div>
           </div>
 
           {jobError && (
             <div className="mt-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3">
-              <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
-                <AlertCircle className="h-4 w-4" />
-                <span>{jobError}</span>
+              <div className="flex items-start gap-2 text-sm text-red-700 dark:text-red-300">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span className="break-words">{jobError}</span>
               </div>
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 rounded-xl border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6">
-            <div className="flex items-center justify-between gap-4">
+        {/* ── Queries + Parameters Grid ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Search Queries — spans 2 columns on lg */}
+          <div className="lg:col-span-2 rounded-xl border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
               <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Search Queries
               </h2>
@@ -213,10 +219,10 @@ export default function ScrapperApiPage() {
               </div>
             </div>
 
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-3 max-h-[50vh] overflow-y-auto pr-1">
               {queries.map((q, idx) => (
-                <div key={idx} className="flex items-center gap-3">
-                  <div className="w-8 text-xs text-gray-400 dark:text-gray-500">
+                <div key={idx} className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-6 sm:w-8 text-xs text-gray-400 dark:text-gray-500 text-right shrink-0">
                     {idx + 1}
                   </div>
                   <input
@@ -230,14 +236,15 @@ export default function ScrapperApiPage() {
                       });
                     }}
                     placeholder={`Query ${idx + 1}`}
-                    className="flex-1 rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                    className="flex-1 min-w-0 rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                   />
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6 space-y-4">
+          {/* Parameters — single column on lg */}
+          <div className="rounded-xl border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-4 sm:p-6 space-y-4">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               Parameters
             </h2>
@@ -319,7 +326,8 @@ export default function ScrapperApiPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-6">
+        {/* ── Job Status Card ── */}
+        <div className="rounded-xl border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-4 sm:p-6">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             Job Status
           </h2>
@@ -329,10 +337,10 @@ export default function ScrapperApiPage() {
             </p>
           ) : (
             <div className="mt-3 space-y-2 text-sm">
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-6 gap-y-2">
+                <div className="min-w-0">
                   <span className="text-gray-500 dark:text-gray-400">Job ID:</span>{" "}
-                  <span className="font-mono text-gray-900 dark:text-gray-100">
+                  <span className="font-mono text-gray-900 dark:text-gray-100 break-all">
                     {jobId}
                   </span>
                 </div>
@@ -364,19 +372,19 @@ export default function ScrapperApiPage() {
                 )}
               </div>
               {jobProgress?.lastMessage && (
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600 dark:text-gray-300 break-words">
                   {jobProgress.lastMessage}
                 </p>
               )}
-              {(jobStatus === "running" || jobStatus === "pending") && (
+              {isJobActive && (
                 <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                   <span>Running in background (safe to leave this page)</span>
                 </div>
               )}
               {jobStatus === "completed" && (
                 <p className="text-green-700 dark:text-green-300">
-                  Completed. Click “Download Excel”.
+                  Completed. Click &ldquo;Download Excel&rdquo;.
                 </p>
               )}
               {jobStatus === "cancelled" && (
