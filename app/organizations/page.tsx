@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, Plus, ChevronLeft, ChevronRight, Search, ArrowUpDown } from "lucide-react";
+import { Trash2, Plus, ChevronLeft, ChevronRight, Search, ArrowUpDown, Download } from "lucide-react";
 import {
   ColumnCustomizer,
   ColumnConfig,
@@ -152,60 +152,49 @@ export default function OrganizationsPage() {
 
   // Search and sort state
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState<"" | "name" | "contacts">("");
 
-  const compareStable = (a: Organization, b: Organization) => {
-    // Match backend default order: created_at asc, then org_id asc
-    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-    if (aTime !== bTime) return aTime - bTime;
-    return (a.org_id || "").localeCompare(b.org_id || "");
-  };
+  // Export state
+  const [exportType, setExportType] = useState<"all" | "range">("all");
+  const [exportRange, setExportRange] = useState("");
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
-  // Compute filtered and sorted data
-  const getFilteredAndSortedData = () => {
-    let data = [...organizations];
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      data = data.filter((org) =>
-        org.legal_name?.toLowerCase().includes(query)
-      );
-    }
-
-    // Apply sorting
-    if (sortOption === "name") {
-      data.sort((a, b) => {
-        const cmp = (a.legal_name || "").localeCompare(b.legal_name || "");
-        return cmp !== 0 ? cmp : compareStable(a, b);
-      });
-    } else if (sortOption === "contacts") {
-      // Prioritize organizations with more contact data
-      data.sort((a, b) => {
-        const aScore =
-          (a.primary_email ? 1 : 0) + (a.primary_phone_e164 ? 1 : 0);
-        const bScore =
-          (b.primary_email ? 1 : 0) + (b.primary_phone_e164 ? 1 : 0);
-        const scoreCmp = bScore - aScore;
-        return scoreCmp !== 0 ? scoreCmp : compareStable(a, b);
-      });
-    }
-
-    return data;
-  };
-
-  const displayedOrganizations = getFilteredAndSortedData();
+  // Reset page when search or sort changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchQuery, sortOption]);
 
   useEffect(() => {
     fetchOrganizations();
-  }, [page, limit]);
+  }, [page, limit, debouncedSearchQuery, sortOption]);
 
   const fetchOrganizations = async () => {
     setIsLoading(true);
     try {
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      
+      if (debouncedSearchQuery.trim()) {
+        queryParams.append("search", debouncedSearchQuery.trim());
+      }
+      
+      if (sortOption) {
+        queryParams.append("sort", sortOption);
+      }
+
       const response = await fetch(
-        `/api/organizations?page=${page}&limit=${limit}`
+        `/api/organizations?${queryParams.toString()}`
       );
       if (!response.ok) throw new Error("Failed to fetch organizations");
       const result = await response.json();
@@ -236,6 +225,68 @@ export default function OrganizationsPage() {
     } catch (err) {
       alert("Failed to delete organization");
       console.error(err);
+    }
+  };
+
+  const handleExport = async () => {
+    setExportError(null);
+
+    let isAll = exportType === "all";
+    let start = 0;
+    let end = 0;
+
+    if (!isAll) {
+      const trimmedRange = exportRange.trim();
+      const match = trimmedRange.match(/^(\d+)\s*-\s*(\d+)$/);
+      if (!match) {
+        setExportError("Invalid format. Use format like: 8-40");
+        return;
+      }
+      start = parseInt(match[1], 10);
+      end = parseInt(match[2], 10);
+      if (isNaN(start) || isNaN(end) || start < 1 || end < start) {
+        setExportError("Invalid range (start must be >= 1 and <= end)");
+        return;
+      }
+    }
+
+    setIsExporting(true);
+    try {
+      const queryParams = new URLSearchParams();
+      if (debouncedSearchQuery.trim()) {
+        queryParams.append("search", debouncedSearchQuery.trim());
+      }
+      if (sortOption) {
+        queryParams.append("sort", sortOption);
+      }
+      if (!isAll) {
+        queryParams.append("start", start.toString());
+        queryParams.append("end", end.toString());
+      } else {
+        queryParams.append("all", "true");
+      }
+
+      const response = await fetch(`/api/organizations/export?${queryParams.toString()}`);
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to export organizations");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `organizations_export_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      setExportRange("");
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "Failed to export");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -537,6 +588,55 @@ export default function OrganizationsPage() {
           </div>
         )}
 
+        {/* Export Controls - Super Admin only */}
+        {isSuperAdmin && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-3 shadow-sm w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Export:
+              </label>
+              <select
+                value={exportType}
+                onChange={(e) => {
+                  setExportType(e.target.value as "all" | "range");
+                  setExportError(null);
+                }}
+                className="h-9 rounded-md border border-gray-300 dark:border-ng-dark-elevated dark:bg-ng-dark-bg dark:text-gray-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All</option>
+                <option value="range">Select Rows</option>
+              </select>
+              
+              {exportType === "range" && (
+                <input
+                  type="text"
+                  value={exportRange}
+                  onChange={(e) => {
+                    setExportRange(e.target.value);
+                    setExportError(null);
+                  }}
+                  className="h-9 w-24 rounded-md border border-gray-300 dark:border-ng-dark-elevated dark:bg-ng-dark-bg dark:text-gray-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              )}
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                disabled={(exportType === "range" && !exportRange.trim()) || isExporting}
+              >
+                {isExporting ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Export
+              </button>
+            </div>
+            {exportError && (
+              <span className="text-sm text-red-600 dark:text-red-300">{exportError}</span>
+            )}
+          </div>
+        )}
+
         <span className="sm:ml-auto text-xs text-gray-500 dark:text-gray-400">
           Current page rows: {(page - 1) * limit + 1} -{" "}
           {Math.min(page * limit, totalCount)}
@@ -603,7 +703,7 @@ export default function OrganizationsPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : displayedOrganizations.length === 0 ? (
+              ) : organizations.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={totalColumnSpan}
@@ -613,7 +713,7 @@ export default function OrganizationsPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                displayedOrganizations.map((org, index) => (
+                organizations.map((org, index) => (
                   <TableRow
                     key={org.org_id}
                     className="cursor-pointer hover:bg-gray-50 dark:hover:bg-ng-dark-hover bg-white dark:bg-ng-dark-card"

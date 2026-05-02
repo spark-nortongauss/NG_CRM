@@ -129,11 +129,15 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(url.searchParams.get("limit") || "10");
   const offset = (page - 1) * limit;
 
+  // Search & sort params (server-side so they apply across ALL records)
+  const search = url.searchParams.get("search")?.trim() || "";
+  const sort = url.searchParams.get("sort") || ""; // "" | "name" | "contacts"
+
   // Clamp limit
   const safeLimit = Math.min(Math.max(limit, 1), 100);
 
   try {
-    const { data, count, error } = await supabase
+    let query = supabase
       .from("organizations")
       .select(`
         *,
@@ -141,11 +145,35 @@ export async function GET(req: NextRequest) {
           full_name,
           email
         )
-      `, { count: "exact" })
-      .order("created_at", { ascending: true })
-      // Tie-breaker for deterministic ordering (bulk inserts often share the same created_at)
-      .order("org_id", { ascending: true })
-      .range(offset, offset + safeLimit - 1);
+      `, { count: "exact" });
+
+    // Apply search filter across the entire table
+    if (search) {
+      query = query.ilike("legal_name", `%${search}%`);
+    }
+
+    // Apply sorting across the entire table
+    if (sort === "name") {
+      query = query
+        .order("legal_name", { ascending: true, nullsFirst: false });
+    } else if (sort === "contacts") {
+      // Sort by contact richness: orgs with email & phone first
+      query = query
+        .order("primary_email", { ascending: true, nullsFirst: true })
+        .order("primary_phone_e164", { ascending: true, nullsFirst: true })
+        .order("created_at", { ascending: true });
+    } else {
+      // Default ordering
+      query = query
+        .order("created_at", { ascending: true })
+        // Tie-breaker for deterministic ordering (bulk inserts often share the same created_at)
+        .order("org_id", { ascending: true });
+    }
+
+    // Apply pagination
+    query = query.range(offset, offset + safeLimit - 1);
+
+    const { data, count, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

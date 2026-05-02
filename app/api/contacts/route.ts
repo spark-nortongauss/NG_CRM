@@ -201,16 +201,57 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(url.searchParams.get("limit") || "10");
   const offset = (page - 1) * limit;
 
+  // Search & sort params (server-side so they apply across ALL records)
+  const search = url.searchParams.get("search")?.trim() || "";
+  const searchType = url.searchParams.get("searchType") || "name"; // "name" | "email"
+  const sort = url.searchParams.get("sort") || ""; // "" | "name" | "contacts"
+
   // Clamp limit
   const safeLimit = Math.min(Math.max(limit, 1), 100);
 
   try {
-    const { data, count, error } = await supabase
+    let query = supabase
       .from("contacts")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .order("id", { ascending: false })
-      .range(offset, offset + safeLimit - 1);
+      .select("*", { count: "exact" });
+
+    // Apply search filter across the entire table
+    if (search) {
+      if (searchType === "email") {
+        query = query.or(
+          `email_1.ilike.%${search}%,email_2.ilike.%${search}%,email_3.ilike.%${search}%`
+        );
+      } else {
+        // Default: search by name
+        query = query.or(
+          `first_name.ilike.%${search}%,last_name.ilike.%${search}%`
+        );
+      }
+    }
+
+    // Apply sorting across the entire table
+    if (sort === "name") {
+      query = query
+        .order("first_name", { ascending: true, nullsFirst: false })
+        .order("last_name", { ascending: true, nullsFirst: false });
+    } else if (sort === "contacts") {
+      // Sort by contact richness: records with both email & phone first
+      // Supabase doesn't support computed sorts, so we use a two-tier approach:
+      // email_1 not-null first, then mobile_1 not-null first, then default order
+      query = query
+        .order("email_1", { ascending: true, nullsFirst: true })
+        .order("mobile_1", { ascending: true, nullsFirst: true })
+        .order("created_at", { ascending: false });
+    } else {
+      // Default ordering
+      query = query
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false });
+    }
+
+    // Apply pagination
+    query = query.range(offset, offset + safeLimit - 1);
+
+    const { data, count, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

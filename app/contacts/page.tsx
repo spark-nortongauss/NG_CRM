@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, Plus, ChevronLeft, ChevronRight, Search, ArrowUpDown } from "lucide-react";
+import { Trash2, Plus, ChevronLeft, ChevronRight, Search, ArrowUpDown, Download } from "lucide-react";
 import { format } from "date-fns";
 import {
   ColumnCustomizer,
@@ -143,82 +143,50 @@ export default function ContactsPage() {
 
   // Search and sort state
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"name" | "email">("name");
   const [sortOption, setSortOption] = useState<"" | "name" | "contacts">("");
 
-  const compareStable = (a: Contact, b: Contact) => {
-    // Match backend default order: created_at desc, id desc.
-    // Only creation time determines position – updates do NOT move rows.
-    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-    if (aTime !== bTime) return bTime - aTime;
-    return (b.id || "").localeCompare(a.id || "");
-  };
+  // Export state
+  const [exportType, setExportType] = useState<"all" | "range">("all");
+  const [exportRange, setExportRange] = useState("");
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
-  // Compute filtered and sorted data
-  const getFilteredAndSortedData = () => {
-    let data = [...contacts];
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      if (searchType === "name") {
-        data = data.filter(
-          (contact) =>
-            contact.first_name?.toLowerCase().includes(query) ||
-            contact.last_name?.toLowerCase().includes(query)
-        );
-      } else {
-        data = data.filter(
-          (contact) =>
-            contact.email_1?.toLowerCase().includes(query) ||
-            contact.email_2?.toLowerCase().includes(query) ||
-            contact.email_3?.toLowerCase().includes(query)
-        );
-      }
-    }
-
-    // Apply sorting
-    if (sortOption === "name") {
-      data.sort((a, b) => {
-        const aName = `${a.first_name || ""} ${a.last_name || ""}`.trim();
-        const bName = `${b.first_name || ""} ${b.last_name || ""}`.trim();
-        const cmp = aName.localeCompare(bName);
-        return cmp !== 0 ? cmp : compareStable(a, b);
-      });
-    } else if (sortOption === "contacts") {
-      // Priority: has both email AND phone > has either > has neither
-      data.sort((a, b) => {
-        const hasEmail = (c: Contact) =>
-          !!(c.email_1 || c.email_2 || c.email_3);
-        const hasPhone = (c: Contact) =>
-          !!(c.mobile_1 || c.mobile_2 || c.mobile_3 || c.fixed_number);
-
-        const aHasEmail = hasEmail(a);
-        const aHasPhone = hasPhone(a);
-        const bHasEmail = hasEmail(b);
-        const bHasPhone = hasPhone(b);
-
-        const aScore = (aHasEmail ? 1 : 0) + (aHasPhone ? 1 : 0);
-        const bScore = (bHasEmail ? 1 : 0) + (bHasPhone ? 1 : 0);
-        const scoreCmp = bScore - aScore;
-        return scoreCmp !== 0 ? scoreCmp : compareStable(a, b);
-      });
-    }
-
-    return data;
-  };
-
-  const displayedContacts = getFilteredAndSortedData();
+  // Reset page when search or sort changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchQuery, searchType, sortOption]);
 
   useEffect(() => {
     fetchContacts();
-  }, [page, limit]);
+  }, [page, limit, debouncedSearchQuery, searchType, sortOption]);
 
   const fetchContacts = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/contacts?page=${page}&limit=${limit}`);
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      
+      if (debouncedSearchQuery.trim()) {
+        queryParams.append("search", debouncedSearchQuery.trim());
+        queryParams.append("searchType", searchType);
+      }
+      
+      if (sortOption) {
+        queryParams.append("sort", sortOption);
+      }
+
+      const response = await fetch(`/api/contacts?${queryParams.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch contacts");
       const result = await response.json();
 
@@ -248,6 +216,69 @@ export default function ContactsPage() {
     } catch (err) {
       alert("Failed to delete contact");
       console.error(err);
+    }
+  };
+
+  const handleExport = async () => {
+    setExportError(null);
+
+    let isAll = exportType === "all";
+    let start = 0;
+    let end = 0;
+
+    if (!isAll) {
+      const trimmedRange = exportRange.trim();
+      const match = trimmedRange.match(/^(\d+)\s*-\s*(\d+)$/);
+      if (!match) {
+        setExportError("Invalid format. Use format like: 8-40");
+        return;
+      }
+      start = parseInt(match[1], 10);
+      end = parseInt(match[2], 10);
+      if (isNaN(start) || isNaN(end) || start < 1 || end < start) {
+        setExportError("Invalid range (start must be >= 1 and <= end)");
+        return;
+      }
+    }
+
+    setIsExporting(true);
+    try {
+      const queryParams = new URLSearchParams();
+      if (debouncedSearchQuery.trim()) {
+        queryParams.append("search", debouncedSearchQuery.trim());
+        queryParams.append("searchType", searchType);
+      }
+      if (sortOption) {
+        queryParams.append("sort", sortOption);
+      }
+      if (!isAll) {
+        queryParams.append("start", start.toString());
+        queryParams.append("end", end.toString());
+      } else {
+        queryParams.append("all", "true");
+      }
+
+      const response = await fetch(`/api/contacts/export?${queryParams.toString()}`);
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to export contacts");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `contacts_export_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      setExportRange("");
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "Failed to export");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -538,6 +569,55 @@ export default function ContactsPage() {
           </div>
         )}
 
+        {/* Export Controls - Super Admin only */}
+        {isSuperAdmin && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-gray-200 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-card p-3 shadow-sm w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Export:
+              </label>
+              <select
+                value={exportType}
+                onChange={(e) => {
+                  setExportType(e.target.value as "all" | "range");
+                  setExportError(null);
+                }}
+                className="h-9 rounded-md border border-gray-300 dark:border-ng-dark-elevated dark:bg-ng-dark-bg dark:text-gray-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All</option>
+                <option value="range">Select Rows</option>
+              </select>
+              
+              {exportType === "range" && (
+                <input
+                  type="text"
+                  value={exportRange}
+                  onChange={(e) => {
+                    setExportRange(e.target.value);
+                    setExportError(null);
+                  }}
+                  className="h-9 w-24 rounded-md border border-gray-300 dark:border-ng-dark-elevated dark:bg-ng-dark-bg dark:text-gray-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              )}
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                disabled={(exportType === "range" && !exportRange.trim()) || isExporting}
+              >
+                {isExporting ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Export
+              </button>
+            </div>
+            {exportError && (
+              <span className="text-sm text-red-600 dark:text-red-300">{exportError}</span>
+            )}
+          </div>
+        )}
+
         <span className="sm:ml-auto text-xs text-gray-500 dark:text-gray-400">
           Current page rows: {(page - 1) * limit + 1} -{" "}
           {Math.min(page * limit, totalCount)}
@@ -611,7 +691,7 @@ export default function ContactsPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : displayedContacts.length === 0 ? (
+              ) : contacts.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={totalColumnSpan}
@@ -621,7 +701,7 @@ export default function ContactsPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                displayedContacts.map((contact, index) => (
+                contacts.map((contact, index) => (
                   <TableRow
                     key={contact.id}
                     className="cursor-pointer hover:bg-gray-50 dark:hover:bg-ng-dark-hover bg-white dark:bg-ng-dark-card"
