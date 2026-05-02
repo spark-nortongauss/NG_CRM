@@ -1,10 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Loader2, Play, Square, Download, AlertCircle } from "lucide-react";
-import type { ScrapperJobProgress } from "@/lib/scrapper/types";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, Play, Square, Download, AlertCircle, AlertTriangle } from "lucide-react";
 
-type JobStatus = "pending" | "running" | "completed" | "failed" | "cancelled";
+type RunStatus = "idle" | "running" | "completed" | "failed" | "cancelled";
+
+interface ProgressData {
+  status?: string;
+  queryIndex?: number;
+  countryIndex?: number;
+  start?: number;
+  collectedCount?: number;
+  uniqueDomainsCount?: number;
+  lastMessage?: string;
+  downloadUrl?: string;
+  message?: string;
+}
 
 export default function ScrapperApiPage() {
   const [queriesCount, setQueriesCount] = useState<number>(5);
@@ -17,12 +28,13 @@ export default function ScrapperApiPage() {
   const [timeFilter, setTimeFilter] = useState<string>("");
   const [requestDelayMs, setRequestDelayMs] = useState<number>(0);
 
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
-  const [jobProgress, setJobProgress] = useState<ScrapperJobProgress | null>(null);
-  const [jobError, setJobError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
+  const [runStatus, setRunStatus] = useState<RunStatus>("idle");
+  const [progress, setProgress] = useState<ProgressData | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+
+  const abortRef = useRef<AbortController | null>(null);
 
   // Resize query inputs array when queriesCount changes
   useEffect(() => {
@@ -42,45 +54,22 @@ export default function ScrapperApiPage() {
 
   const canRun = useMemo(() => {
     const nonEmptyQueries = queries.map((q) => q.trim()).filter(Boolean);
-    return nonEmptyQueries.length > 0 && countries.length > 0 && !isSubmitting;
-  }, [queries, countries, isSubmitting]);
+    return nonEmptyQueries.length > 0 && countries.length > 0 && runStatus !== "running";
+  }, [queries, countries, runStatus]);
 
-  // Poll job status while running/pending
-  useEffect(() => {
-    if (!jobId) return;
-    if (!jobStatus || jobStatus === "pending" || jobStatus === "running") {
-      const timer = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/scrapper/jobs/${jobId}`, {
-            cache: "no-store",
-          });
-          const data = await res.json();
-          if (!res.ok) {
-            setJobError(data.error || "Failed to fetch job status");
-            return;
-          }
-          setJobStatus(data.job.status);
-          setJobProgress(data.job.progress);
-          setJobError(data.job.error_message || null);
-        } catch (e) {
-          setJobError(e instanceof Error ? e.message : "Polling failed");
-        }
-      }, 1500);
-      return () => clearInterval(timer);
-    }
-  }, [jobId, jobStatus]);
-
-  const startJob = async () => {
-    setIsSubmitting(true);
-    setJobError(null);
-    setJobId(null);
-    setJobStatus(null);
-    setJobProgress(null);
+  const startRun = async () => {
+    setRunStatus("running");
+    setErrorMsg(null);
+    setDownloadUrl(null);
+    setProgress(null);
+    setWarnings([]);
 
     const nonEmptyQueries = queries.map((q) => q.trim()).filter(Boolean);
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
-      const res = await fetch("/api/scrapper/jobs", {
+      const res = await fetch("/api/scrapper/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,43 +80,118 @@ export default function ScrapperApiPage() {
           timeFilter,
           requestDelayMs,
         }),
+        signal: controller.signal,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to start job");
 
-      setJobId(data.jobId);
-      setJobStatus("pending");
-    } catch (e) {
-      setJobError(e instanceof Error ? e.message : "Failed to start job");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
+
+      // Read the SSE stream
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Parse SSE events from buffer
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || ""; // Keep incomplete last part
+
+        for (const part of parts) {
+          if (!part.trim()) continue;
+
+          let eventType = "message";
+          let eventData = "";
+
+          for (const line of part.split("\n")) {
+            if (line.startsWith("event: ")) {
+              eventType = line.slice(7).trim();
+            } else if (line.startsWith("data: ")) {
+              eventData = line.slice(6);
+            }
+          }
+
+          if (!eventData) continue;
+
+          try {
+            const parsed = JSON.parse(eventData) as ProgressData;
+
+            switch (eventType) {
+              case "progress":
+                setProgress(parsed);
+                break;
+              case "complete":
+                setProgress(parsed);
+                setDownloadUrl(parsed.downloadUrl || null);
+                setRunStatus("completed");
+                // Auto-download the Excel file immediately on completion
+                // (works even if this tab is in the background)
+                if (parsed.downloadUrl) {
+                  const a = document.createElement("a");
+                  a.href = parsed.downloadUrl;
+                  a.download = "scrapper-results.xlsx";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                }
+                break;
+              case "error":
+                setErrorMsg(parsed.message || "Unknown error");
+                setRunStatus("failed");
+                break;
+              case "cancelled":
+                setRunStatus("cancelled");
+                break;
+              case "warning":
+                setWarnings((prev) => [...prev.slice(-19), parsed.message || "Warning"]);
+                break;
+            }
+          } catch {
+            // Ignore malformed data
+          }
+        }
+      }
+
+      // If we finished reading without getting a terminal event, treat as complete
+      if (runStatus === "running") {
+        // This could happen if stream just ended — check last known progress
+        setRunStatus((prev) => (prev === "running" ? "completed" : prev));
+      }
+    } catch (err) {
+      if ((err as Error).name === "AbortError") {
+        setRunStatus("cancelled");
+      } else {
+        setErrorMsg(err instanceof Error ? err.message : "Failed to run");
+        setRunStatus("failed");
+      }
     } finally {
-      setIsSubmitting(false);
+      abortRef.current = null;
     }
   };
 
-  const cancelJob = async () => {
-    if (!jobId) return;
-    setIsCancelling(true);
-    setJobError(null);
-    try {
-      const res = await fetch(`/api/scrapper/jobs/${jobId}/cancel`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to cancel");
-      setJobStatus(data.job.status);
-    } catch (e) {
-      setJobError(e instanceof Error ? e.message : "Failed to cancel job");
-    } finally {
-      setIsCancelling(false);
+  const cancelRun = () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+      setRunStatus("cancelled");
     }
   };
 
-  const download = () => {
-    if (!jobId) return;
-    window.location.href = `/api/scrapper/jobs/${jobId}/download`;
+  const downloadExcel = () => {
+    if (downloadUrl) {
+      window.open(downloadUrl, "_blank");
+    }
   };
 
-  const isJobActive = jobStatus === "running" || jobStatus === "pending";
+  const isActive = runStatus === "running";
 
   return (
     <div className="w-full px-3 sm:px-6 py-4 sm:py-8">
@@ -140,17 +204,17 @@ export default function ScrapperApiPage() {
                 Scrapper API (Google Search → Filter → Excel)
               </h1>
               <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                Super-admin tool to run long searches in the background and download an Excel result when finished.
+                Super-admin tool to run searches and download an Excel result. Please stay on this page while the job is running.
               </p>
             </div>
             {/* Action buttons — stack vertically on mobile, row on sm+ */}
             <div className="flex flex-col xs:flex-row sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
               <button
-                onClick={startJob}
-                disabled={!canRun || isJobActive}
+                onClick={startRun}
+                disabled={!canRun}
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 sm:py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
               >
-                {isSubmitting ? (
+                {isActive ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Play className="h-4 w-4" />
@@ -158,26 +222,16 @@ export default function ScrapperApiPage() {
                 Run
               </button>
               <button
-                onClick={cancelJob}
-                disabled={
-                  !jobId ||
-                  isCancelling ||
-                  jobStatus === "completed" ||
-                  jobStatus === "failed" ||
-                  jobStatus === "cancelled"
-                }
+                onClick={cancelRun}
+                disabled={!isActive}
                 className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 dark:border-ng-dark-elevated px-4 py-2.5 sm:py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ng-dark-hover disabled:opacity-50 transition-colors"
               >
-                {isCancelling ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Square className="h-4 w-4" />
-                )}
+                <Square className="h-4 w-4" />
                 Cancel
               </button>
               <button
-                onClick={download}
-                disabled={!jobId || jobStatus !== "completed"}
+                onClick={downloadExcel}
+                disabled={!downloadUrl || runStatus !== "completed"}
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 sm:py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
               >
                 <Download className="h-4 w-4" />
@@ -186,11 +240,11 @@ export default function ScrapperApiPage() {
             </div>
           </div>
 
-          {jobError && (
+          {errorMsg && (
             <div className="mt-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3">
               <div className="flex items-start gap-2 text-sm text-red-700 dark:text-red-300">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                <span className="break-words">{jobError}</span>
+                <span className="break-words">{errorMsg}</span>
               </div>
             </div>
           )}
@@ -214,7 +268,8 @@ export default function ScrapperApiPage() {
                   max={60}
                   value={queriesCount}
                   onChange={(e) => setQueriesCount(Number(e.target.value))}
-                  className="w-20 rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-2 py-1 text-sm text-gray-900 dark:text-gray-100"
+                  disabled={isActive}
+                  className="w-20 rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-2 py-1 text-sm text-gray-900 dark:text-gray-100 disabled:opacity-50"
                 />
               </div>
             </div>
@@ -236,7 +291,8 @@ export default function ScrapperApiPage() {
                       });
                     }}
                     placeholder={`Query ${idx + 1}`}
-                    className="flex-1 min-w-0 rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                    disabled={isActive}
+                    className="flex-1 min-w-0 rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 disabled:opacity-50"
                   />
                 </div>
               ))}
@@ -257,7 +313,8 @@ export default function ScrapperApiPage() {
                 value={countriesText}
                 onChange={(e) => setCountriesText(e.target.value)}
                 placeholder="AE, SA, QA"
-                className="w-full rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                disabled={isActive}
+                className="w-full rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 disabled:opacity-50"
               />
             </div>
 
@@ -272,7 +329,8 @@ export default function ScrapperApiPage() {
                   max={100}
                   value={resultsPerQuery}
                   onChange={(e) => setResultsPerQuery(Number(e.target.value))}
-                  className="w-full rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                  disabled={isActive}
+                  className="w-full rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 disabled:opacity-50"
                 />
               </div>
               <div className="space-y-1">
@@ -285,7 +343,8 @@ export default function ScrapperApiPage() {
                   max={100}
                   value={minScore}
                   onChange={(e) => setMinScore(Number(e.target.value))}
-                  className="w-full rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                  disabled={isActive}
+                  className="w-full rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 disabled:opacity-50"
                 />
               </div>
             </div>
@@ -297,7 +356,8 @@ export default function ScrapperApiPage() {
               <select
                 value={timeFilter}
                 onChange={(e) => setTimeFilter(e.target.value)}
-                className="w-full rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                disabled={isActive}
+                className="w-full rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 disabled:opacity-50"
               >
                 <option value="">All time</option>
                 <option value="qdr:d">Last day</option>
@@ -317,10 +377,11 @@ export default function ScrapperApiPage() {
                 max={10000}
                 value={requestDelayMs}
                 onChange={(e) => setRequestDelayMs(Number(e.target.value))}
-                className="w-full rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                disabled={isActive}
+                className="w-full rounded-md border border-gray-300 dark:border-ng-dark-elevated bg-white dark:bg-ng-dark-bg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 disabled:opacity-50"
               />
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                Best-effort pacing. Background execution is chunked per page to avoid timeouts.
+                Best-effort pacing between API calls.
               </p>
             </div>
           </div>
@@ -331,71 +392,82 @@ export default function ScrapperApiPage() {
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             Job Status
           </h2>
-          {!jobId ? (
+          {runStatus === "idle" ? (
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               No job started yet.
             </p>
           ) : (
             <div className="mt-3 space-y-2 text-sm">
               <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-6 gap-y-2">
-                <div className="min-w-0">
-                  <span className="text-gray-500 dark:text-gray-400">Job ID:</span>{" "}
-                  <span className="font-mono text-gray-900 dark:text-gray-100 break-all">
-                    {jobId}
-                  </span>
-                </div>
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">Status:</span>{" "}
                   <span className="font-medium text-gray-900 dark:text-gray-100">
-                    {jobStatus || "…"}
+                    {progress?.status || runStatus}
                   </span>
                 </div>
-                {jobProgress?.collectedCount !== undefined && (
+                {progress?.collectedCount !== undefined && (
                   <div>
                     <span className="text-gray-500 dark:text-gray-400">
                       Collected:
                     </span>{" "}
                     <span className="font-medium text-gray-900 dark:text-gray-100">
-                      {jobProgress.collectedCount}
+                      {progress.collectedCount}
                     </span>
                   </div>
                 )}
-                {jobProgress?.uniqueDomainsCount !== undefined && (
+                {progress?.uniqueDomainsCount !== undefined && (
                   <div>
                     <span className="text-gray-500 dark:text-gray-400">
                       Unique domains:
                     </span>{" "}
                     <span className="font-medium text-gray-900 dark:text-gray-100">
-                      {jobProgress.uniqueDomainsCount}
+                      {progress.uniqueDomainsCount}
                     </span>
                   </div>
                 )}
               </div>
-              {jobProgress?.lastMessage && (
+              {progress?.lastMessage && (
                 <p className="text-gray-600 dark:text-gray-300 break-words">
-                  {jobProgress.lastMessage}
+                  {progress.lastMessage}
                 </p>
               )}
-              {isJobActive && (
+              {isActive && (
                 <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                   <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                  <span>Running in background (safe to leave this page)</span>
+                  <span>Running — please stay on this page until complete</span>
                 </div>
               )}
-              {jobStatus === "completed" && (
+              {runStatus === "completed" && (
                 <p className="text-green-700 dark:text-green-300">
                   Completed. Click &ldquo;Download Excel&rdquo;.
                 </p>
               )}
-              {jobStatus === "cancelled" && (
+              {runStatus === "cancelled" && (
                 <p className="text-amber-700 dark:text-amber-300">
                   Cancelled.
                 </p>
               )}
-              {jobStatus === "failed" && (
+              {runStatus === "failed" && (
                 <p className="text-red-700 dark:text-red-300">
-                  Failed. {jobError ? `(${jobError})` : ""}
+                  Failed. {errorMsg ? `(${errorMsg})` : ""}
                 </p>
+              )}
+
+              {/* Warnings log */}
+              {warnings.length > 0 && (
+                <div className="mt-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3">
+                  <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-300 mb-1">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    <span>Warnings ({warnings.length})</span>
+                  </div>
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {warnings.map((w, i) => (
+                      <p key={i} className="text-xs text-amber-600 dark:text-amber-400 break-words">
+                        {w}
+                      </p>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           )}
