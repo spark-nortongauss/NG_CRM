@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
     // Add data rows
     for (const row of data) {
       const values = headers.map(header => {
-        const val = row[header];
+        const val = (row as Record<string, any>)[header];
         if (val === null || val === undefined) return '';
         const strVal = String(val);
         // Escape quotes and wrap in quotes if contains comma, newline, or quote
