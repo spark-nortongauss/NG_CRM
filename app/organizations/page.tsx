@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -155,6 +155,10 @@ export default function OrganizationsPage() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState<"" | "name" | "contacts">("");
 
+  // Refs to track previous search/sort values for page-reset logic
+  const prevDebouncedSearchRef = useRef(debouncedSearchQuery);
+  const prevSortOptionRef = useRef(sortOption);
+
   // Export state
   const [exportType, setExportType] = useState<"all" | "range">("all");
   const [exportRange, setExportRange] = useState("");
@@ -168,9 +172,15 @@ export default function OrganizationsPage() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Reset page when search or sort changes
+  // Reset page to 1 only when search/sort values genuinely change (not on mount)
   useEffect(() => {
-    setPage(1);
+    const searchChanged = prevDebouncedSearchRef.current !== debouncedSearchQuery;
+    const sortChanged = prevSortOptionRef.current !== sortOption;
+    prevDebouncedSearchRef.current = debouncedSearchQuery;
+    prevSortOptionRef.current = sortOption;
+    if (searchChanged || sortChanged) {
+      setPage(1);
+    }
   }, [debouncedSearchQuery, sortOption]);
 
   useEffect(() => {
@@ -511,9 +521,29 @@ export default function OrganizationsPage() {
 
   // Get visible column configs in order
   const getVisibleColumnConfigs = () => {
-    return visibleColumns
+    const importantColumns = ["legal_name", "trade_name", "industry_primary", "linkedin_url"];
+    
+    const configs = visibleColumns
       .map((key) => ALL_COLUMNS.find((col) => col.key === key))
       .filter(Boolean) as ColumnConfig[];
+
+    const importantConfigs = [];
+    const otherConfigs = [];
+
+    // First collect important configs in the correct order
+    for (const key of importantColumns) {
+      const config = configs.find((c) => c.key === key);
+      if (config) importantConfigs.push(config);
+    }
+
+    // Then collect the rest
+    for (const config of configs) {
+      if (!importantColumns.includes(config.key)) {
+        otherConfigs.push(config);
+      }
+    }
+
+    return [...importantConfigs, ...otherConfigs];
   };
 
   if (error) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -147,6 +147,11 @@ export default function ContactsPage() {
   const [searchType, setSearchType] = useState<"name" | "email">("name");
   const [sortOption, setSortOption] = useState<"" | "name" | "contacts">("");
 
+  // Refs to track previous search/sort values for page-reset logic
+  const prevDebouncedSearchRef = useRef(debouncedSearchQuery);
+  const prevSearchTypeRef = useRef(searchType);
+  const prevSortOptionRef = useRef(sortOption);
+
   // Export state
   const [exportType, setExportType] = useState<"all" | "range">("all");
   const [exportRange, setExportRange] = useState("");
@@ -160,9 +165,17 @@ export default function ContactsPage() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Reset page when search or sort changes
+  // Reset page to 1 only when search/sort values genuinely change (not on mount)
   useEffect(() => {
-    setPage(1);
+    const searchChanged = prevDebouncedSearchRef.current !== debouncedSearchQuery;
+    const typeChanged = prevSearchTypeRef.current !== searchType;
+    const sortChanged = prevSortOptionRef.current !== sortOption;
+    prevDebouncedSearchRef.current = debouncedSearchQuery;
+    prevSearchTypeRef.current = searchType;
+    prevSortOptionRef.current = sortOption;
+    if (searchChanged || typeChanged || sortChanged) {
+      setPage(1);
+    }
   }, [debouncedSearchQuery, searchType, sortOption]);
 
   useEffect(() => {
